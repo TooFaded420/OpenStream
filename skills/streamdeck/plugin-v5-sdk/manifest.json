@@ -1,0 +1,37 @@
+{
+  "Actions": [
+    {
+      "UUID": "com.openclaw.v5.status",
+      "Name": "OpenClaw Status",
+      "Tooltip": "Check gateway status",
+      "Icon": "images/status",
+      "States": [{ "Image": "images/status", "Title": "Status" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.tts",
+      "Name": "OpenClaw TTS",
+      "Tooltip": "Toggle TTS",
+      "Icon": "images/tts",
+      "States": [{ "Image": "images/tts", "Title": "TTS" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.spawn",
+      "Name": "OpenClaw Spawn",
+      "Tooltip": "Spawn helper agent",
+      "Icon": "images/spawn",
+      "States": [{ "Image": "images/spawn", "Title": "Spawn" }]
+    }
+  ],
+  "SDKVersion": 2,
+  "Name": "OpenClaw SDK v5",
+  "Description": "Native SDK Stream Deck plugin for OpenClaw",
+  "Version": "5.0.0",
+  "Author": "OpenClaw Community",
+  "URL": "https://openclaw.ai",
+  "Category": "OpenClaw",
+  "CategoryIcon": "images/openclaw",
+  "Icon": "images/openclaw",
+  "CodePathWin": "plugin.bat",
+  "OS": [{ "Platform": "windows", "MinimumVersion": "10" }],
+  "Software": { "MinimumVersion": "6.0" }
+}
