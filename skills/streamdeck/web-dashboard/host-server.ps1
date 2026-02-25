@@ -11,20 +11,54 @@ function Get-DefaultGatewayCfg {
   return [ordered]@{
     active = 'origin-main'
     gateways = [ordered]@{
-      'origin-main' = @{ url = 'http://127.0.0.1:18790'; token = $null }
+      'origin-main' = [ordered]@{ url = 'http://127.0.0.1:18790'; token = $null }
     }
   }
 }
 
-function Load-GatewayCfg {
-  if (Test-Path $GatewayCfgPath) {
-    try { return Get-Content $GatewayCfgPath -Raw | ConvertFrom-Json -AsHashtable } catch {}
+function Normalize-GatewayCfg($obj) {
+  $cfg = Get-DefaultGatewayCfg
+  if (-not $obj) { return $cfg }
+
+  if ($obj.active) { $cfg.active = [string]$obj.active }
+
+  $cfg.gateways = [ordered]@{}
+  $gws = $obj.gateways
+  if ($gws) {
+    foreach ($p in $gws.PSObject.Properties) {
+      $name = [string]$p.Name
+      $val = $p.Value
+      $url = if ($val.url) { [string]$val.url } else { 'http://127.0.0.1:18790' }
+      $token = if ($null -eq $val.token -or "$($val.token)" -eq '') { $null } else { [string]$val.token }
+      $cfg.gateways[$name] = [ordered]@{ url = $url; token = $token }
+    }
   }
-  return Get-DefaultGatewayCfg
+
+  if ($cfg.gateways.Count -eq 0) {
+    $cfg = Get-DefaultGatewayCfg
+  }
+
+  if (-not $cfg.gateways.Contains($cfg.active)) {
+    $cfg.active = ($cfg.gateways.Keys | Select-Object -First 1)
+  }
+
+  return $cfg
 }
 
-function Save-GatewayCfg([hashtable]$cfg) {
-  $cfg | ConvertTo-Json -Depth 8 | Out-File -FilePath $GatewayCfgPath -Encoding UTF8
+function Load-GatewayCfg {
+  if (Test-Path $GatewayCfgPath) {
+    try {
+      $raw = Get-Content $GatewayCfgPath -Raw
+      $obj = $raw | ConvertFrom-Json
+      return (Normalize-GatewayCfg $obj)
+    } catch {}
+  }
+  return (Get-DefaultGatewayCfg)
+}
+
+function Save-GatewayCfg($cfg) {
+  $safe = Normalize-GatewayCfg $cfg
+  $safe | ConvertTo-Json -Depth 8 | Out-File -FilePath $GatewayCfgPath -Encoding UTF8
 }
 
 function Test-Gateway([string]$url) {
@@ -47,12 +81,12 @@ try {
       switch -Regex ($req.Url.AbsolutePath) {
         '^/$|^/index.html$' {
           $bytes = [Text.Encoding]::UTF8.GetBytes((Get-Content $IndexPath -Raw))
-          $res.ContentType = 'text/html; charset=utf-8'; $res.StatusCode = 200
+          $res.ContentType='text/html; charset=utf-8'; $res.StatusCode=200
           $res.OutputStream.Write($bytes,0,$bytes.Length)
         }
         '^/wizard$|^/wizard.html$' {
           $bytes = [Text.Encoding]::UTF8.GetBytes((Get-Content $WizardPath -Raw))
-          $res.ContentType = 'text/html; charset=utf-8'; $res.StatusCode = 200
+          $res.ContentType='text/html; charset=utf-8'; $res.StatusCode=200
           $res.OutputStream.Write($bytes,0,$bytes.Length)
         }
         '^/api/device-map$' {
@@ -65,22 +99,8 @@ try {
           if ($req.HttpMethod -eq 'POST') {
             $sr = New-Object IO.StreamReader($req.InputStream, $req.ContentEncoding)
             $body = $sr.ReadToEnd(); $sr.Close()
-            $raw = $body | ConvertFrom-Json -AsHashtable
-            $cfg = [ordered]@{
-              active = [string]$raw.active
-              gateways = [ordered]@{}
-            }
-            foreach ($k in $raw.gateways.Keys) {
-              $g = $raw.gateways[$k]
-              $cfg.gateways[$k] = [ordered]@{
-                url = [string]$g.url
-                token = if ($null -eq $g.token -or "$($g.token)" -eq '') { $null } else { [string]$g.token }
-              }
-            }
-            if (-not $cfg.gateways.Contains($cfg.active)) {
-              $cfg.active = ($cfg.gateways.Keys | Select-Object -First 1)
-            }
-            Save-GatewayCfg $cfg
+            $obj = $body | ConvertFrom-Json
+            Save-GatewayCfg $obj
           }
           $payload = (Load-GatewayCfg | ConvertTo-Json -Depth 8)
           $bytes = [Text.Encoding]::UTF8.GetBytes($payload)
@@ -105,15 +125,15 @@ try {
           foreach ($p in $ports) {
             $url = "http://127.0.0.1:$p"
             if (Test-Gateway $url) {
-              $name = switch ($p) { '18790' {'origin-main'} '18789' {'origin-alt'} default {"local-$p"} }
+              $name = switch ($p) { '18790' {'origin-main'} '18789' {'zero-mac'} default {"local-$p"} }
               $token = $null
-              if ($cfg.gateways.ContainsKey($name)) { $token = $cfg.gateways[$name].token }
-              $gws[$name] = @{ url = $url; token = $token }
+              if ($cfg.gateways.Contains($name)) { $token = $cfg.gateways[$name].token }
+              $gws[$name] = [ordered]@{ url = $url; token = $token }
             }
           }
           foreach ($k in $cfg.gateways.Keys) { if (-not $gws.Contains($k)) { $gws[$k] = $cfg.gateways[$k] } }
           $cfg.gateways = $gws
-          if (-not $cfg.gateways.ContainsKey($cfg.active)) { $cfg.active = ($cfg.gateways.Keys | Select-Object -First 1) }
+          if (-not $cfg.gateways.Contains($cfg.active)) { $cfg.active = ($cfg.gateways.Keys | Select-Object -First 1) }
           Save-GatewayCfg $cfg
 
           $payload = ($cfg | ConvertTo-Json -Depth 8)
@@ -130,7 +150,7 @@ try {
             try {
               $headers = @{}
               if ($g.token) { $headers['Authorization'] = "Bearer $($g.token)" }
-              $r = Invoke-RestMethod -Uri "$($g.url)/status" -Method Get -Headers $headers -TimeoutSec 3
+              Invoke-RestMethod -Uri "$($g.url)/status" -Method Get -Headers $headers -TimeoutSec 3 | Out-Null
               $sw.Stop()
               $out[$k] = [ordered]@{ ok = $true; latencyMs = [int]$sw.ElapsedMilliseconds; code = 'OK' }
             } catch {
@@ -155,11 +175,8 @@ try {
               $headers = @{}
               if ($g.token) { $headers['Authorization'] = "Bearer $($g.token)" }
               Invoke-RestMethod -Uri "$($g.url)/status" -Method Get -Headers $headers -TimeoutSec 3 | Out-Null
-              $sw.Stop()
-              $lat = [int]$sw.ElapsedMilliseconds
-              if (-not $best -or $lat -lt $best.latencyMs) {
-                $best = [ordered]@{ key = $k; latencyMs = $lat }
-              }
+              $sw.Stop(); $lat = [int]$sw.ElapsedMilliseconds
+              if (-not $best -or $lat -lt $best.latencyMs) { $best = [ordered]@{ key = $k; latencyMs = $lat } }
             } catch { $sw.Stop() }
           }
           if ($best) {

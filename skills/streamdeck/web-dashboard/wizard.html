@@ -3,150 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenClaw Gateway Setup Wizard</title>
+  <title>OpenClaw Gateway Wizard (Simple)</title>
   <style>
     body{font-family:Consolas,monospace;background:#0b0f12;color:#d7ffe0;margin:0}
-    .wrap{max-width:900px;margin:24px auto;padding:16px}
+    .wrap{max-width:980px;margin:20px auto;padding:16px}
     .card{border:1px solid #2b4c3c;background:#111a16;border-radius:10px;padding:14px;margin-bottom:12px}
     h1{margin:0 0 8px;color:#8aff7a}
-    label{display:block;font-size:12px;color:#8db69a;margin:8px 0 4px}
-    input{width:100%;padding:8px;border-radius:8px;border:1px solid #2b4c3c;background:#0b120f;color:#d7ffe0}
-    .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    button{padding:9px 12px;border:1px solid #2b4c3c;background:#0d1a14;color:#d7ffe0;border-radius:8px;cursor:pointer}
     .muted{color:#8db69a;font-size:12px}
-    pre{background:#0a120e;border:1px solid #2b4c3c;padding:10px;border-radius:8px;white-space:pre-wrap}
+    button{padding:9px 12px;border:1px solid #2b4c3c;background:#0d1a14;color:#d7ffe0;border-radius:8px;cursor:pointer;margin-right:8px;margin-top:8px}
+    textarea, input{width:100%;padding:10px;border-radius:8px;border:1px solid #2b4c3c;background:#0b120f;color:#d7ffe0}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    pre{white-space:pre-wrap;background:#0a120e;border:1px solid #2b4c3c;padding:10px;border-radius:8px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>OpenClaw Gateway Setup Wizard</h1>
-      <div class="muted">Configure local/remote gateways without editing JSON manually.</div>
-    </div>
-
-    <div class="card">
-      <h3>1) Detect local gateways</h3>
-      <div class="row">
-        <input id="ports" value="18790,18789,28790" />
-        <button id="detectBtn">Detect</button>
-        <button id="loadBtn">Reload Config</button>
-      </div>
-      <div class="muted">Scans localhost ports and adds healthy instances.</div>
-    </div>
-
-    <div class="card">
-      <h3>2) Add / Update gateways</h3>
-      <div id="gwList"></div>
-      <button id="addBtn">+ Add Gateway</button>
-    </div>
-
-    <div class="card">
-      <h3>3) Validate + Save</h3>
-      <button id="testBtn">Test All Gateways</button>
-      <button id="bestBtn">Apply Best Gateway</button>
-      <button id="saveBtn">Save Config</button>
-      <div class="muted">Saved to: %USERPROFILE%\.openclaw\streamdeck-gateways.json</div>
-      <pre id="testOut">No tests yet.</pre>
-    </div>
-
-    <div class="card">
-      <h3>Current JSON</h3>
-      <pre id="jsonOut">loading...</pre>
-    </div>
+<div class="wrap">
+  <div class="card">
+    <h1>Gateway Setup Wizard (Simple + Reliable)</h1>
+    <div class="muted">Use Detect, then edit JSON directly, then Save. No fragile dynamic fields.</div>
   </div>
 
-<script>
-let cfg = { active:'origin-main', gateways:{} };
+  <div class="card">
+    <div class="row">
+      <div>
+        <label class="muted">Detect local ports (comma-separated)</label>
+        <input id="ports" value="18790,18789,28790" />
+      </div>
+      <div>
+        <label class="muted">Quick preset</label>
+        <button id="presetBtn">Apply 2-port preset (18790 + 18789)</button>
+      </div>
+    </div>
+    <button id="loadBtn">Load Config</button>
+    <button id="detectBtn">Detect Local</button>
+    <button id="testBtn">Test All</button>
+    <button id="bestBtn">Apply Best Gateway</button>
+    <button id="saveBtn">Save Config</button>
+    <div class="muted">Config path: %USERPROFILE%\.openclaw\streamdeck-gateways.json</div>
+  </div>
 
+  <div class="card">
+    <h3>Config JSON</h3>
+    <textarea id="json" rows="18"></textarea>
+  </div>
+
+  <div class="card">
+    <h3>Test Output</h3>
+    <pre id="out">No tests yet.</pre>
+  </div>
+</div>
+
+<script>
 async function api(path, opts={}){
   const r = await fetch(path, {headers:{'content-type':'application/json'}, ...opts});
   const t = await r.text();
-  try{return JSON.parse(t)}catch{return t}
+  try { return JSON.parse(t); } catch { return t; }
 }
+function setJson(obj){ document.getElementById('json').value = JSON.stringify(obj,null,2); }
+function getJson(){ return JSON.parse(document.getElementById('json').value); }
 
-function render(){
-  const root = document.getElementById('gwList');
-  root.innerHTML='';
-  const names = Object.keys(cfg.gateways||{});
-  if(!names.length){ root.innerHTML='<div class="muted">No gateways yet.</div>'; }
-  for(const name of names){
-    const g = cfg.gateways[name] || {};
-    const row = document.createElement('div');
-    row.className='card';
-    row.innerHTML = `
-      <label>Name</label><input data-k="name" value="${name}">
-      <label>URL</label><input data-k="url" value="${g.url||''}">
-      <label>Token (optional)</label><input data-k="token" value="${g.token||''}">
-      <label>Active</label><input type="radio" name="activeGw" ${cfg.active===name?'checked':''}>
-      <button data-del="1">Remove</button>`;
+async function load(){ const cfg = await api('/api/gateway-config'); setJson(cfg); }
 
-    const [nameIn,urlIn,tokIn,radio,del] = row.querySelectorAll('input,button');
-    nameIn.onchange = ()=>{
-      const newName = nameIn.value.trim(); if(!newName || newName===name) return;
-      cfg.gateways[newName]=cfg.gateways[name]; delete cfg.gateways[name];
-      if(cfg.active===name) cfg.active=newName; render();
-    };
-    urlIn.oninput = ()=>{ cfg.gateways[name].url = urlIn.value.trim(); sync(); };
-    tokIn.oninput = ()=>{ cfg.gateways[name].token = tokIn.value.trim() || null; sync(); };
-    radio.onchange = ()=>{ cfg.active = name; sync(); };
-    del.onclick = ()=>{ delete cfg.gateways[name]; if(cfg.active===name) cfg.active = Object.keys(cfg.gateways)[0]||''; render(); };
+document.getElementById('loadBtn').onclick = load;
 
-    root.appendChild(row);
-  }
-  sync();
-}
-
-function sync(){ document.getElementById('jsonOut').textContent = JSON.stringify(cfg,null,2); }
-
-document.getElementById('addBtn').onclick = ()=>{
-  let base='gateway'; let i=1; while(cfg.gateways[`${base}-${i}`]) i++;
-  const n = `${base}-${i}`;
-  cfg.gateways[n] = { url:'http://127.0.0.1:18790', token:null };
-  if(!cfg.active) cfg.active=n;
-  render();
-};
-
-document.getElementById('loadBtn').onclick = async ()=>{
-  cfg = await api('/api/gateway-config');
-  render();
+document.getElementById('presetBtn').onclick = ()=>{
+  setJson({
+    active: 'origin-main',
+    gateways: {
+      'origin-main': { url: 'http://127.0.0.1:18790', token: null },
+      'zero-mac': { url: 'http://127.0.0.1:18789', token: null }
+    }
+  });
 };
 
 document.getElementById('detectBtn').onclick = async ()=>{
   const ports = document.getElementById('ports').value.split(',').map(s=>s.trim()).filter(Boolean);
-  cfg = await api('/api/detect-local', {method:'POST', body:JSON.stringify({ports})});
-  render();
+  const cfg = await api('/api/detect-local', { method:'POST', body: JSON.stringify({ports}) });
+  setJson(cfg);
 };
 
 document.getElementById('saveBtn').onclick = async ()=>{
-  await api('/api/gateway-config', {method:'POST', body:JSON.stringify(cfg)});
-  alert('Saved gateway config.');
+  try {
+    const cfg = getJson();
+    await api('/api/gateway-config', { method:'POST', body: JSON.stringify(cfg) });
+    document.getElementById('out').textContent = 'Saved successfully.';
+  } catch (e) {
+    document.getElementById('out').textContent = 'Save failed: '+e.message;
+  }
 };
 
 document.getElementById('testBtn').onclick = async ()=>{
-  const out = document.getElementById('testOut');
-  out.textContent = 'Testing...';
-  const res = await api('/api/test-gateways');
+  const out = await api('/api/test-gateways');
   const lines = [];
-  for (const [k,v] of Object.entries(res||{})) {
-    lines.push(`${k}: ${v.code}${v.latencyMs?` (${v.latencyMs}ms)`:''}`);
+  for (const [k,v] of Object.entries(out||{})) {
+    lines.push(`${k}: ${v.code}${v.latencyMs ? ` (${v.latencyMs}ms)` : ''}`);
   }
-  out.textContent = lines.join('\n') || 'No gateways';
+  document.getElementById('out').textContent = lines.join('\n') || 'No gateways';
 };
 
 document.getElementById('bestBtn').onclick = async ()=>{
-  const out = document.getElementById('testOut');
-  out.textContent = 'Selecting best gateway...';
   const res = await api('/api/apply-best-gateway', { method:'POST' });
-  if (res.ok) {
-    out.textContent = `Active set to ${res.active} (${res.latencyMs}ms)`;
-    cfg = await api('/api/gateway-config');
-    render();
-  } else {
-    out.textContent = `Failed: ${res.error||'No healthy gateways'}`;
-  }
+  document.getElementById('out').textContent = res.ok
+    ? `Active set to ${res.active} (${res.latencyMs}ms)`
+    : `Failed: ${res.error || 'No healthy gateways'}`;
+  await load();
 };
 
-(async()=>{ cfg = await api('/api/gateway-config'); render(); })();
+load();
 </script>
 </body>
 </html>
