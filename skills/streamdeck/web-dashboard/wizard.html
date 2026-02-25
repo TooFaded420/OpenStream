@@ -41,9 +41,11 @@
     </div>
 
     <div class="card">
-      <h3>3) Save</h3>
+      <h3>3) Validate + Save</h3>
+      <button id="testBtn">Test All Gateways</button>
       <button id="saveBtn">Save Config</button>
       <div class="muted">Saved to: %USERPROFILE%\.openclaw\streamdeck-gateways.json</div>
+      <pre id="testOut">No tests yet.</pre>
     </div>
 
     <div class="card">
@@ -117,6 +119,17 @@ document.getElementById('detectBtn').onclick = async ()=>{
 document.getElementById('saveBtn').onclick = async ()=>{
   await api('/api/gateway-config', {method:'POST', body:JSON.stringify(cfg)});
   alert('Saved gateway config.');
+};
+
+document.getElementById('testBtn').onclick = async ()=>{
+  const out = document.getElementById('testOut');
+  out.textContent = 'Testing...';
+  const res = await api('/api/test-gateways');
+  const lines = [];
+  for (const [k,v] of Object.entries(res||{})) {
+    lines.push(`${k}: ${v.code}${v.latencyMs?` (${v.latencyMs}ms)`:''}`);
+  }
+  out.textContent = lines.join('\n') || 'No gateways';
 };
 
 (async()=>{ cfg = await api('/api/gateway-config'); render(); })();

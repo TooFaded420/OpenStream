@@ -65,7 +65,21 @@ try {
           if ($req.HttpMethod -eq 'POST') {
             $sr = New-Object IO.StreamReader($req.InputStream, $req.ContentEncoding)
             $body = $sr.ReadToEnd(); $sr.Close()
-            $cfg = $body | ConvertFrom-Json -AsHashtable
+            $raw = $body | ConvertFrom-Json -AsHashtable
+            $cfg = [ordered]@{
+              active = [string]$raw.active
+              gateways = [ordered]@{}
+            }
+            foreach ($k in $raw.gateways.Keys) {
+              $g = $raw.gateways[$k]
+              $cfg.gateways[$k] = [ordered]@{
+                url = [string]$g.url
+                token = if ($null -eq $g.token -or "$($g.token)" -eq '') { $null } else { [string]$g.token }
+              }
+            }
+            if (-not $cfg.gateways.Contains($cfg.active)) {
+              $cfg.active = ($cfg.gateways.Keys | Select-Object -First 1)
+            }
             Save-GatewayCfg $cfg
           }
           $payload = (Load-GatewayCfg | ConvertTo-Json -Depth 8)
@@ -103,6 +117,30 @@ try {
           Save-GatewayCfg $cfg
 
           $payload = ($cfg | ConvertTo-Json -Depth 8)
+          $bytes = [Text.Encoding]::UTF8.GetBytes($payload)
+          $res.ContentType='application/json; charset=utf-8'; $res.StatusCode=200
+          $res.OutputStream.Write($bytes,0,$bytes.Length)
+        }
+        '^/api/test-gateways$' {
+          $cfg = Load-GatewayCfg
+          $out = [ordered]@{}
+          foreach ($k in $cfg.gateways.Keys) {
+            $g = $cfg.gateways[$k]
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            try {
+              $headers = @{}
+              if ($g.token) { $headers['Authorization'] = "Bearer $($g.token)" }
+              $r = Invoke-RestMethod -Uri "$($g.url)/status" -Method Get -Headers $headers -TimeoutSec 3
+              $sw.Stop()
+              $out[$k] = [ordered]@{ ok = $true; latencyMs = [int]$sw.ElapsedMilliseconds; code = 'OK' }
+            } catch {
+              $sw.Stop()
+              $msg = "$($_.Exception.Message)".ToLower()
+              $code = if ($msg -match '401|403|unauthorized|forbidden') { 'AUTH' } elseif ($msg -match 'timed out|timeout|abort') { 'TIME' } else { 'OFF' }
+              $out[$k] = [ordered]@{ ok = $false; latencyMs = $null; code = $code }
+            }
+          }
+          $payload = ($out | ConvertTo-Json -Depth 6)
           $bytes = [Text.Encoding]::UTF8.GetBytes($payload)
           $res.ContentType='application/json; charset=utf-8'; $res.StatusCode=200
           $res.OutputStream.Write($bytes,0,$bytes.Length)
