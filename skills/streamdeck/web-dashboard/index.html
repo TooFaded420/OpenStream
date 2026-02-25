@@ -7,19 +7,22 @@
   <style>
     :root {
       --bg:#070b08;--panel:#0d1511;--line:#294636;--primary:#8aff7a;--dim:#4fa95a;--alert:#ff6b57;--accent:#ff5a4f;--text:#d5ffd2;--muted:#83aa86;
+      --queue-backlog:#4fa95a;--queue-running:#82b1ff;--queue-done:#6b6b6b;
     }
-    body[data-theme="command"] { --bg:#0a0d12;--panel:#121824;--line:#2e3f60;--primary:#82b1ff;--dim:#7393c6;--alert:#ff7676;--accent:#ff9f7a;--text:#e6ecff;--muted:#9db0d8; }
-    body[data-theme="coral"] { --bg:#140b0b;--panel:#1f1212;--line:#5b2f2f;--primary:#ff9f8f;--dim:#d98679;--alert:#ffd0c6;--accent:#ff5a4f;--text:#ffe9e5;--muted:#d5a8a1; }
+    body[data-theme="command"] { --bg:#0a0d12;--panel:#121824;--line:#2e3f60;--primary:#82b1ff;--dim:#7393c6;--alert:#ff7676;--accent:#ff9f7a;--text:#e6ecff;--muted:#9db0d8;--queue-backlog:#7393c6;--queue-running:#8aff7a;--queue-done:#6b6b6b; }
+    body[data-theme="coral"] { --bg:#140b0b;--panel:#1f1212;--line:#5b2f2f;--primary:#ff9f8f;--dim:#d98679;--alert:#ffd0c6;--accent:#ff5a4f;--text:#ffe9e5;--muted:#d5a8a1;--queue-backlog:#d98679;--queue-running:#ff9f8f;--queue-done:#8b6b6b; }
     *{box-sizing:border-box} body{margin:0;font-family:Consolas,monospace;color:var(--text);background:radial-gradient(circle at top,var(--panel) 0%, var(--bg) 45%);min-height:100vh}
     .scan::before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.03),rgba(255,255,255,.03) 1px,transparent 1px,transparent 3px)}
-    .wrap{max-width:1200px;margin:0 auto;padding:18px}.panel{border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 85%, #000 15%);border-radius:10px;padding:12px}
+    .wrap{max-width:1400px;margin:0 auto;padding:18px}.panel{border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 85%, #000 15%);border-radius:10px;padding:12px}
     .top{display:grid;grid-template-columns:2fr 1fr;gap:14px}.main{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}
+    .queue-section{margin-top:14px}
+    .queue-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
     h1{margin:0;color:var(--primary);font-size:22px}.sub{font-size:12px;color:var(--muted)}
     .toolbar{display:flex;gap:8px;align-items:center;margin-top:10px}.badge{border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:var(--dim)}
     .grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;margin-top:14px}.stat{padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.18)}
     .k{font-size:11px;color:var(--muted)} .v{font-size:22px;color:var(--primary)} .alert{color:var(--alert)}
     .section-title{font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:1px}.list{display:flex;flex-direction:column;gap:8px}
-    .item{display:flex;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--line);border-radius:7px;background:rgba(0,0,0,.15)}
+    .item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:7px;background:rgba(0,0,0,.15)}
     .item.err{border-color:#7a3a33;background:rgba(255,90,79,.08)}
     .claw{display:inline-flex;vertical-align:middle;margin-right:6px;animation:pinch .35s ease-in-out 2}
     .claw svg{width:14px;height:14px;fill:var(--accent)}
@@ -28,7 +31,52 @@
     button{cursor:pointer;border:1px solid var(--line);color:var(--text);background:rgba(0,0,0,.2);border-radius:8px;padding:10px;font-family:inherit}
     button:hover{border-color:var(--primary)}
     .footer{margin-top:12px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between}
-    @media (max-width:900px){.top,.main{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+    @media (max-width:1100px){.top,.main{grid-template-columns:1fr}.queue-grid{grid-template-columns:1fr}}
+    
+    .queue-column{min-height:200px}
+    .queue-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+    .queue-title{font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px}
+    .queue-count{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.3);color:var(--muted)}
+    .queue-col-backlog .queue-title{color:var(--queue-backlog)}
+    .queue-col-running .queue-title{color:var(--queue-running)}
+    .queue-col-done .queue-title{color:var(--queue-done)}
+    .mission-card{padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.2);margin-bottom:8px;cursor:grab;transition:all .15s}
+    .mission-card:hover{border-color:var(--primary);transform:translateY(-1px)}
+    .mission-card.dragging{opacity:.5;cursor:grabbing}
+    .mission-title{font-size:12px;font-weight:bold;margin-bottom:4px;word-break:break-word}
+    .mission-desc{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.4}
+    .mission-meta{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--dim)}
+    .mission-priority{padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.3)}
+    .mission-priority.high{color:var(--alert)}
+    .mission-priority.normal{color:var(--dim)}
+    .mission-priority.low{color:var(--muted)}
+    .mission-actions{display:flex;gap:4px;margin-top:8px}
+    .mission-actions button{font-size:10px;padding:4px 8px;border-radius:4px}
+    .mission-actions button:hover{background:var(--primary);color:var(--bg)}
+    .empty-state{text-align:center;padding:20px;color:var(--muted);font-size:11px;font-style:italic}
+    .add-mission-form{display:flex;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+    .add-mission-form input{flex:1;padding:8px;border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.2);color:var(--text);font-family:inherit;font-size:12px}
+    .add-mission-form input::placeholder{color:var(--muted)}
+    .add-mission-form select{padding:8px;border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.2);color:var(--text);font-family:inherit;font-size:12px}
+    .add-mission-form button{padding:8px 14px;background:var(--primary);color:var(--bg);border:none;font-weight:bold}
+    .add-mission-form button:hover{background:var(--dim)}
+    .queue-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+    .queue-actions button{font-size:11px;padding:6px 12px}
+    /* ============ TELEMETRY STRIP v1.1 ============ */
+    .telemetry-strip{margin:14px 0;display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+    .telemetry-card{padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.22);position:relative;overflow:hidden}
+    .telemetry-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--primary);opacity:.6}
+    .telemetry-card.warning::before{background:var(--alert)}
+    .telemetry-card.error::before{background:#ff3333}
+    .telemetry-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+    .telemetry-value{font-size:20px;color:var(--primary);font-weight:600;margin-top:2px}
+    .telemetry-value.alert{color:var(--alert)}
+    .telemetry-value.dim{color:var(--dim)}
+    .telemetry-sub{font-size:10px;color:var(--muted);margin-top:2px}
+    .code-badge{display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(138,255,122,.15);font-size:9px;margin-right:4px}
+    .code-badge.err{background:rgba(255,90,79,.15);color:var(--alert)}
+    @media (max-width:1100px){.telemetry-strip{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:500px){.telemetry-strip{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body class="scan" data-theme="pip">
@@ -51,6 +99,73 @@
       <div class="panel">
         <div class="section-title">DEVICE MAP</div>
         <div id="device-map" class="device-map"></div>
+      </div>
+    </div>
+
+    <!-- TELEMETRY STRIP v1.1 -->
+    <div class="telemetry-strip" id="telemetry-strip">
+      <div class="telemetry-card" id="tel-success">
+        <div class="telemetry-label">Success Rate</div>
+        <div class="telemetry-value" id="tel-success-val">--</div>
+        <div class="telemetry-sub" id="tel-success-sub">No data</div>
+      </div>
+      <div class="telemetry-card" id="tel-avg">
+        <div class="telemetry-label">Avg Latency</div>
+        <div class="telemetry-value" id="tel-avg-val">--</div>
+        <div class="telemetry-sub" id="tel-avg-sub">5m window</div>
+      </div>
+      <div class="telemetry-card" id="tel-min">
+        <div class="telemetry-label">Min Latency</div>
+        <div class="telemetry-value dim" id="tel-min-val">--</div>
+        <div class="telemetry-sub">Best case</div>
+      </div>
+      <div class="telemetry-card" id="tel-max">
+        <div class="telemetry-label">Max Latency</div>
+        <div class="telemetry-value" id="tel-max-val">--</div>
+        <div class="telemetry-sub">Worst case</div>
+      </div>
+      <div class="telemetry-card" id="tel-codes">
+        <div class="telemetry-label">Status Codes</div>
+        <div class="telemetry-sub" id="tel-codes-val" style="margin-top:4px">--</div>
+      </div>
+      <div class="telemetry-card" id="tel-recent">
+        <div class="telemetry-label">Recent Errors</div>
+        <div class="telemetry-value alert" id="tel-recent-val">--</div>
+        <div class="telemetry-sub" id="tel-recent-sub">Last 5m</div>
+      </div>
+    </div>
+
+    <div class="queue-section">
+      <div class="panel">
+        <div class="section-title">MISSION QUEUE</div>
+        <div class="add-mission-form">
+          <input type="text" id="mission-title" placeholder="Quick task title..." maxlength="100">
+          <input type="text" id="mission-desc" placeholder="Description (optional)" maxlength="200" style="flex:1.5">
+          <select id="mission-priority">
+            <option value="low">Low</option>
+            <option value="normal" selected>Normal</option>
+            <option value="high">High</option>
+          </select>
+          <button id="btn-add-mission">+ Add</button>
+        </div>
+        <div class="queue-grid">
+          <div class="queue-column queue-col-backlog">
+            <div class="queue-header"><span class="queue-title">BACKLOG</span><span class="queue-count" id="count-backlog">0</span></div>
+            <div id="queue-backlog" class="list" ondragover="allowDrop(event)" ondrop="drop(event, 'backlog')"><div class="empty-state">No missions</div></div>
+          </div>
+          <div class="queue-column queue-col-running">
+            <div class="queue-header"><span class="queue-title">RUNNING</span><span class="queue-count" id="count-running">0</span></div>
+            <div id="queue-running" class="list" ondragover="allowDrop(event)" ondrop="drop(event, 'running')"><div class="empty-state">No missions</div></div>
+          </div>
+          <div class="queue-column queue-col-done">
+            <div class="queue-header"><span class="queue-title">DONE</span><span class="queue-count" id="count-done">0</span></div>
+            <div id="queue-done" class="list" ondragover="allowDrop(event)" ondrop="drop(event, 'done')"><div class="empty-state">No missions</div></div>
+          </div>
+        </div>
+        <div class="queue-actions">
+          <button id="btn-clear-done">Clear Completed</button>
+          <button id="btn-refresh-queue">↻ Refresh</button>
+        </div>
       </div>
     </div>
 
@@ -79,38 +194,29 @@
   </div>
 
 <script>
-const apiBase='http://127.0.0.1:18790';
+const apiBase='http://127.0.0.1:18790', dashboardBase='http://127.0.0.1:8787';
 const el=id=>document.getElementById(id); const actions=[];
-const themes=['pip','command','coral']; let themeIx=0;
+const themes=['pip','command','coral']; let themeIx=0, missions=[], draggedMission=null;
+
 function setTheme(i){ themeIx=i%themes.length; document.body.dataset.theme=themes[themeIx]; el('theme-btn').textContent='Theme: '+themes[themeIx]; }
 el('theme-btn').onclick=()=>setTheme(themeIx+1);
 
 function pushAction(name,result='ok'){ actions.unshift({name,result,at:new Date().toLocaleTimeString()}); if(actions.length>14)actions.pop(); renderActions(); }
 function renderActions(){ const r=el('action-list'); r.innerHTML=''; if(!actions.length){ r.innerHTML='<div class="item"><span>No activity yet.</span></div>'; return; }
-  const clawSvg='<span class="claw" aria-label="lobster claw"><svg viewBox="0 0 24 24"><path d="M14.8 3.3c1.8.6 3.2 2 3.7 3.8.3 1.1.2 2.2-.2 3.2l2.7 2.8c.7.7.7 1.8 0 2.5l-1 1c-.7.7-1.8.7-2.5 0l-2.8-2.7c-1 .4-2.1.5-3.2.2-1.8-.5-3.2-1.9-3.8-3.7l2.7-.8c.3.8.9 1.4 1.7 1.6 1.4.4 2.9-.4 3.3-1.8.4-1.4-.4-2.9-1.8-3.3-.8-.2-1.6-.1-2.3.3l-1.5-2.3c1.3-.8 2.9-1 4.5-.5zM5.4 12.8l5.8 5.8-2.2 2.1-5.8-5.7z"/></svg></span>';
+  const clawSvg='<span class="claw"><svg viewBox="0 0 24 24"><path d="M14.8 3.3c1.8.6 3.2 2 3.7 3.8.3 1.1.2 2.2-.2 3.2l2.7 2.8c.7.7.7 1.8 0 2.5l-1 1c-.7.7-1.8.7-2.5 0l-2.8-2.7c-1 .4-2.1.5-3.2.2-1.8-.5-3.2-1.9-3.8-3.7l2.7-.8c.3.8.9 1.4 1.7 1.6 1.4.4 2.9-.4 3.3-1.8.4-1.4-.4-2.9-1.8-3.3-.8-.2-1.6-.1-2.3.3l-1.5-2.3c1.3-.8 2.9-1 4.5-.5zM5.4 12.8l5.8 5.8-2.2 2.1-5.8-5.7z"/></svg></span>';
   for(const a of actions){ const c=a.result==='ok'?'var(--primary)':'var(--alert)'; const d=document.createElement('div'); d.className='item'+(a.result==='ok'?'':' err'); const claw=a.result==='ok'?'':clawSvg; d.innerHTML=`<span>${claw}${a.name}</span><span style="color:${c}">${a.result.toUpperCase()} • ${a.at}</span>`; r.appendChild(d);} }
 async function jfetch(path,opts={}){ const r=await fetch(apiBase+path,{headers:{'content-type':'application/json'},...opts}); let data={}; try{data=await r.json()}catch{} return {ok:r.ok,data}; }
+async function dfetch(path,opts={}){ const r=await fetch(dashboardBase+path,{headers:{'content-type':'application/json'},...opts}); let data={}; try{data=await r.json()}catch{} return {ok:r.ok,data}; }
 
 async function refresh(){
-  const [st,ses,subs,nodes]=await Promise.all([
-    jfetch('/status').catch(()=>({ok:false,data:{}})), jfetch('/session.status').catch(()=>({ok:false,data:{}})),
-    jfetch('/subagents.list').catch(()=>({ok:false,data:{}})), jfetch('/nodes.status').catch(()=>({ok:false,data:{}}))
-  ]);
+  const [st,ses,subs,nodes]=await Promise.all([jfetch('/status').catch(()=>({ok:false,data:{}})), jfetch('/session.status').catch(()=>({ok:false,data:{}})), jfetch('/subagents.list').catch(()=>({ok:false,data:{}})), jfetch('/nodes.status').catch(()=>({ok:false,data:{}}))]);
   el('s-gateway').textContent=st.ok?'ONLINE':'OFFLINE'; el('s-gateway').className='v'+(st.ok?'':' alert');
   el('s-model').textContent=(ses.data?.model||'--').split('/').pop().slice(0,12)||'--';
   el('s-agents').textContent=Array.isArray(subs.data?.agents)?subs.data.agents.length:'--';
   el('s-nodes').textContent=Array.isArray(nodes.data?.nodes)?nodes.data.nodes.length:'--';
 }
 
-async function loadDeviceMap(){
-  const root=el('device-map'); root.innerHTML='';
-  try{
-    const r=await fetch('/api/device-map'); const map=await r.json();
-    const keys=Object.keys(map||{});
-    if(!keys.length){ root.innerHTML='<div class="item"><span>No mapped devices yet</span></div>'; return; }
-    for(const serial of keys){ const role=map[serial]?.role||'unknown'; const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${serial}</span><span>${role}</span>`; root.appendChild(d);}    
-  }catch{ root.innerHTML='<div class="item"><span>Device map unavailable</span></div>'; }
-}
+async function loadDeviceMap(){ const root=el('device-map'); root.innerHTML=''; try{ const r=await fetch('/api/device-map'); const map=await r.json(); const keys=Object.keys(map||{}); if(!keys.length){ root.innerHTML='<div class="item"><span>No mapped devices</span></div>'; return; } for(const serial of keys){ const role=map[serial]?.role||'unknown'; const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${serial}</span><span>${role}</span>`; root.appendChild(d);} }catch{ root.innerHTML='<div class="item"><span>Device map unavailable</span></div>'; } }
 
 async function runAction(label,path,body){ try{ const res=await jfetch(path, body?{method:'POST',body:JSON.stringify(body)}:{}); pushAction(label,res.ok?'ok':'err'); await refresh(); } catch{ pushAction(label,'err'); }}
 el('btn-refresh').onclick=()=>refresh().then(()=>pushAction('Refresh','ok')).catch(()=>pushAction('Refresh','err'));
@@ -120,18 +226,78 @@ el('btn-search').onclick=()=>runAction('Web Search','/web.search',{query:'opencl
 el('btn-spawn').onclick=()=>runAction('Spawn Helper','/spawn',{task:'Quick assistance',agentId:'helper'});
 el('btn-tts').onclick=async()=>{ try{ const get=await jfetch('/config.get'); const en=!!(get.data?.messages?.tts?.enabled); await runAction('Toggle TTS','/config.patch',{path:'messages.tts.enabled',value:!en}); } catch{ pushAction('Toggle TTS','err'); } };
 
-function connectGatewayWs(){
-  try{
-    const ws=new WebSocket('ws://127.0.0.1:18790/ws');
-    ws.onopen=()=>{ el('ws-status').textContent='WS: live'; pushAction('Gateway WS connected','ok'); };
-    ws.onmessage=(ev)=>{ try{ const m=JSON.parse(ev.data); if(m?.event) pushAction('WS '+m.event,'ok'); }catch{} };
-    ws.onerror=()=>{ el('ws-status').textContent='WS: error'; };
-    ws.onclose=()=>{ el('ws-status').textContent='WS: closed'; setTimeout(connectGatewayWs,3000); };
-  }catch{ el('ws-status').textContent='WS: unavailable'; }
+function connectGatewayWs(){ try{ const ws=new WebSocket('ws://127.0.0.1:18790/ws'); ws.onopen=()=>{ el('ws-status').textContent='WS: live'; pushAction('Gateway WS','ok'); }; ws.onmessage=(ev)=>{ try{ const m=JSON.parse(ev.data); if(m?.event) pushAction('WS '+m.event,'ok'); }catch{} }; ws.onerror=()=>{ el('ws-status').textContent='WS: error'; }; ws.onclose=()=>{ el('ws-status').textContent='WS: closed'; setTimeout(connectGatewayWs,3000); }; }catch{ el('ws-status').textContent='WS: unavailable'; } }
+
+function escapeHtml(t){ if(!t) return ''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+function createMissionCard(m){ const card=document.createElement('div'); card.className='mission-card'; card.draggable=true; card.dataset.id=m.id; const time=m.createdAt?new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''; card.innerHTML=`<div class="mission-title">${escapeHtml(m.title)}</div>${m.description?`<div class="mission-desc">${escapeHtml(m.description)}</div>`:''}<div class="mission-meta"><span class="mission-priority ${m.priority}">${m.priority.toUpperCase()}</span><span>${time}</span></div><div class="mission-actions">${m.status!=='backlog'?`<button onclick="moveMission(${m.id},'backlog')">← Backlog</button>`:''}${m.status!=='running'?`<button onclick="moveMission(${m.id},'running')">▶ Run</button>`:''}${m.status!=='done'?`<button onclick="moveMission(${m.id},'done')">✓ Done</button>`:''}<button onclick="deleteMission(${m.id})" style="margin-left:auto;color:var(--alert)">×</button></div>`; card.ondragstart=(e)=>{ draggedMission=m; card.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }; card.ondragend=()=>{ card.classList.remove('dragging'); draggedMission=null; }; return card; }
+function renderQueue(){ const bl=missions.filter(m=>m.status==='backlog'), rn=missions.filter(m=>m.status==='running'), dn=missions.filter(m=>m.status==='done'); el('count-backlog').textContent=bl.length; el('count-running').textContent=rn.length; el('count-done').textContent=dn.length; renderColumn('queue-backlog',bl); renderColumn('queue-running',rn); renderColumn('queue-done',dn); }
+function renderColumn(id,items){ const c=el(id); c.innerHTML=''; if(!items.length){ c.innerHTML='<div class="empty-state">No missions</div>'; return; } items.forEach(m=>c.appendChild(createMissionCard(m))); }
+function allowDrop(e){ e.preventDefault(); }
+function drop(e,status){ e.preventDefault(); if(draggedMission&&draggedMission.status!==status) moveMission(draggedMission.id,status); }
+
+async function loadMissions(){ const res=await dfetch('/api/missions'); if(res.ok&&res.data?.missions){ missions=res.data.missions; renderQueue(); } }
+async function addMission(){ const title=el('mission-title').value.trim(), desc=el('mission-desc').value.trim(), priority=el('mission-priority').value; if(!title){ pushAction('Add Mission','err'); return; } const res=await dfetch('/api/missions',{method:'POST',body:JSON.stringify({title,description:desc,priority,source:'dashboard'})}); if(res.ok){ pushAction('Add Mission','ok'); el('mission-title').value=''; el('mission-desc').value=''; await loadMissions(); }else{ pushAction('Add Mission','err'); } }
+async function moveMission(id,status){ const res=await dfetch(`/api/missions/${id}`,{method:'PATCH',body:JSON.stringify({status})}); if(res.ok){ pushAction(`Move → ${status}`,'ok'); await loadMissions(); }else{ pushAction('Move Mission','err'); } }
+async function deleteMission(id){ const res=await dfetch(`/api/missions/${id}`,{method:'DELETE'}); if(res.ok){ pushAction('Delete Mission','ok'); await loadMissions(); }else{ pushAction('Delete Mission','err'); } }
+async function clearCompleted(){ const res=await dfetch('/api/missions/clear-completed',{method:'POST'}); if(res.ok){ pushAction('Clear Completed','ok'); await loadMissions(); }else{ pushAction('Clear Completed','err'); } }
+
+el('btn-add-mission').onclick=addMission; el('mission-title').onkeypress=(e)=>{ if(e.key==='Enter') addMission(); }; el('mission-desc').onkeypress=(e)=>{ if(e.key==='Enter') addMission(); };
+el('btn-refresh-queue').onclick=()=>loadMissions().then(()=>pushAction('Refresh Queue','ok')); el('btn-clear-done').onclick=clearCompleted;
+
+// ============ TELEMETRY v1.1 ============
+async function loadTelemetry() {
+  try {
+    const res = await dfetch('/api/telemetry');
+    if (res.ok && res.data) renderTelemetry(res.data);
+  } catch(e) { console.error('Telemetry load failed:', e); }
 }
 
-setTheme(0); refresh(); loadDeviceMap(); renderActions(); connectGatewayWs();
-setInterval(refresh,10000); setInterval(loadDeviceMap,15000);
+function renderTelemetry(t) {
+  // Success rate
+  const successRate = t.successRate ?? 100;
+  el('tel-success-val').textContent = successRate + '%';
+  el('tel-success-val').className = 'telemetry-value' + (successRate < 90 ? ' alert' : successRate < 95 ? ' dim' : '');
+  el('tel-success-sub').textContent = (t.total ?? 0) + ' calls';
+  el('tel-success').className = 'telemetry-card' + (successRate < 90 ? ' warning' : '');
+  
+  // Avg latency
+  const avg = t.avgLatency ?? 0;
+  el('tel-avg-val').textContent = avg + 'ms';
+  el('tel-avg-val').className = 'telemetry-value' + (avg > 500 ? ' alert' : avg > 200 ? ' dim' : '');
+  
+  // Min latency
+  el('tel-min-val').textContent = (t.minLatency ?? 0) + 'ms';
+  
+  // Max latency
+  const max = t.maxLatency ?? 0;
+  el('tel-max-val').textContent = max + 'ms';
+  el('tel-max-val').className = 'telemetry-value' + (max > 1000 ? ' alert' : max > 500 ? ' dim' : '');
+  el('tel-max').className = 'telemetry-card' + (max > 1000 ? ' warning' : '');
+  
+  // Status codes
+  const codes = t.codes || {};
+  const codeBadges = Object.entries(codes).slice(0, 4).map(([code, count]) => {
+    const isErr = code !== 'OK';
+    return `<span class="code-badge${isErr ? ' err' : ''}">${code}: ${count}</span>`;
+  }).join(' ') || 'No data';
+  el('tel-codes-val').innerHTML = codeBadges;
+  
+  // Recent errors
+  const errors = t.recentErrors || [];
+  const errCount = errors.length;
+  el('tel-recent-val').textContent = errCount;
+  el('tel-recent').className = 'telemetry-card' + (errCount > 0 ? ' error' : '');
+  if (errCount > 0 && errors[0]) {
+    const lastErr = errors[0];
+    const ago = Math.round((Date.now() - lastErr.at) / 1000);
+    el('tel-recent-sub').textContent = `Last: ${lastErr.code || 'ERR'}`;
+  } else {
+    el('tel-recent-sub').textContent = 'Last 5m';
+  }
+}
+
+setTheme(0); refresh(); loadDeviceMap(); renderActions(); connectGatewayWs(); loadMissions(); loadTelemetry();
+setInterval(refresh,10000); setInterval(loadDeviceMap,15000); setInterval(loadMissions,5000); setInterval(loadTelemetry,5000);
 </script>
 </body>
 </html>

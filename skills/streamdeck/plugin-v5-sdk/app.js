@@ -7,6 +7,128 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// ============ TELEMETRY v1.1 ============
+const TELEMETRY_PATH = path.join(CONFIG_DIR, 'telemetry.json');
+const TELEMETRY_MAX_EVENTS = 100;
+const TELEMETRY_FLUSH_INTERVAL_MS = 5000;
+
+let telemetryEvents = [];
+let telemetryFlushTimer = null;
+
+// Load persisted telemetry
+function loadTelemetry() {
+  try {
+    if (fs.existsSync(TELEMETRY_PATH)) {
+      const data = JSON.parse(fs.readFileSync(TELEMETRY_PATH, 'utf-8'));
+      if (Array.isArray(data.events)) {
+        telemetryEvents = data.events.slice(-TELEMETRY_MAX_EVENTS);
+        console.log('[openclaw-v5] Loaded', telemetryEvents.length, 'telemetry events');
+      }
+    }
+  } catch (e) {
+    console.error('[openclaw-v5] Failed to load telemetry:', e.message);
+    telemetryEvents = [];
+  }
+}
+
+// Save telemetry to disk (throttled)
+function flushTelemetry() {
+  try {
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+    const data = {
+      version: '1.1',
+      updatedAt: Date.now(),
+      events: telemetryEvents.slice(-TELEMETRY_MAX_EVENTS)
+    };
+    fs.writeFileSync(TELEMETRY_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('[openclaw-v5] Failed to save telemetry:', e.message);
+  }
+}
+
+// Schedule a flush
+function scheduleFlush() {
+  if (telemetryFlushTimer) clearTimeout(telemetryFlushTimer);
+  telemetryFlushTimer = setTimeout(flushTelemetry, TELEMETRY_FLUSH_INTERVAL_MS);
+}
+
+// Record a telemetry event
+function recordTelemetry(action, result, latencyMs, statusCode, details = {}) {
+  const event = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    timestamp: Date.now(),
+    action,
+    result, // 'ok' | 'err'
+    latencyMs,
+    statusCode, // 'OK' | 'AUTH' | 'TIME' | 'OFF' | 'ERR' | 'NF'
+    gateway: details.gateway || getCurrentGateway().key,
+    model: details.model || null,
+    ...details
+  };
+  telemetryEvents.push(event);
+  if (telemetryEvents.length > TELEMETRY_MAX_EVENTS) {
+    telemetryEvents = telemetryEvents.slice(-TELEMETRY_MAX_EVENTS);
+  }
+  scheduleFlush();
+  return event;
+}
+
+// Get telemetry summary for dashboard
+function getTelemetrySummary() {
+  const now = Date.now();
+  const windowMs = 5 * 60 * 1000; // 5 minute window
+  const recent = telemetryEvents.filter(e => now - e.timestamp < windowMs);
+  
+  const total = recent.length;
+  const ok = recent.filter(e => e.result === 'ok').length;
+  const errors = total - ok;
+  
+  const latencies = recent.filter(e => e.latencyMs > 0).map(e => e.latencyMs);
+  const avgLatency = latencies.length > 0 
+    ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) 
+    : 0;
+  const maxLatency = latencies.length > 0 ? Math.max(...latencies) : 0;
+  const minLatency = latencies.length > 0 ? Math.min(...latencies) : 0;
+  
+  // Status code breakdown
+  const codes = {};
+  recent.forEach(e => { codes[e.statusCode] = (codes[e.statusCode] || 0) + 1; });
+  
+  // Recent errors (last 5)
+  const recentErrors = recent
+    .filter(e => e.result === 'err')
+    .slice(-5)
+    .map(e => ({ action: e.action, code: e.statusCode, at: e.timestamp }));
+  
+  return {
+    window: '5m',
+    total,
+    successRate: total > 0 ? Math.round((ok / total) * 100) : 100,
+    avgLatency,
+    minLatency,
+    maxLatency,
+    codes,
+    recentErrors,
+    lastEvent: telemetryEvents.length > 0 ? telemetryEvents[telemetryEvents.length - 1].timestamp : null
+  };
+}
+
+// Get recent telemetry events
+function getRecentTelemetry(count = 20) {
+  return telemetryEvents.slice(-count).reverse();
+}
+
+// Clear telemetry
+function clearTelemetry() {
+  telemetryEvents = [];
+  flushTelemetry();
+}
+
+// Initialize telemetry
+loadTelemetry();
+
 const args = process.argv.slice(2);
 const getArg = (name) => {
   const i = args.indexOf(name);
@@ -185,6 +307,7 @@ async function callGateway(path, method = 'GET', body, gatewayOverride = null) {
   console.log('[openclaw-v5] api', method, path, 'via', gw.key);
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), cfg.timeoutMs);
+  const start = Date.now();
   
   try {
     const headers = { 'content-type': 'application/json' };
@@ -198,12 +321,22 @@ async function callGateway(path, method = 'GET', body, gatewayOverride = null) {
       body: body ? JSON.stringify(body) : undefined,
       signal: ac.signal
     });
+    const latencyMs = Date.now() - start;
     const text = await r.text();
     let data;
     try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
-    return { ok: r.ok, status: r.status, data, gateway: gw.key };
+    
+    const result = { ok: r.ok, status: r.status, data, gateway: gw.key, latencyMs };
+    const code = r.ok ? 'OK' : errCode(result);
+    recordTelemetry(`${method} ${path}`, r.ok ? 'ok' : 'err', latencyMs, code, { path, method });
+    
+    return result;
   } catch (e) {
-    return { ok: false, status: 0, data: { error: String(e) }, gateway: gw.key };
+    const latencyMs = Date.now() - start;
+    const result = { ok: false, status: 0, data: { error: String(e) }, gateway: gw.key, latencyMs };
+    const code = errCode(result);
+    recordTelemetry(`${method} ${path}`, 'err', latencyMs, code, { path, method, error: String(e) });
+    return result;
   } finally {
     clearTimeout(t);
   }
@@ -407,7 +540,11 @@ async function handleModelDialPress(evt) {
   const { context } = evt;
   const model = dialState.models[dialState.modelIndex];
   setFeedback(context, { title: '...', value: 'Apply' });
+  const start = Date.now();
   const res = await callGateway('/session.set', 'POST', { model });
+  const latencyMs = Date.now() - start;
+  const code = res.ok ? 'OK' : errCode(res);
+  recordTelemetry('dial.model.apply', res.ok ? 'ok' : 'err', latencyMs, code, { model });
   const short = model.split('/').pop().slice(0, 6);
   setFeedback(context, { title: res.ok ? 'OK' : errCode(res), value: short });
 }
@@ -428,13 +565,16 @@ async function handleTtsDialPress(evt) {
   dialState.ttsMuted = !dialState.ttsMuted;
   const vol = dialState.ttsMuted ? 'MUTED' : `${dialState.ttsVolume}%`;
   setFeedback(context, { title: dialState.ttsMuted ? 'OFF' : 'ON', value: vol });
+  recordTelemetry('dial.tts.toggle', 'ok', 0, 'OK', { muted: dialState.ttsMuted, volume: dialState.ttsVolume });
 }
 
 // Dial 3: Session/subagent navigator
 async function handleAgentsDial(evt) {
   const { context, payload } = evt;
   const { ticks } = payload || {};
+  const start = Date.now();
   const res = await callGateway('/subagents.list');
+  const latencyMs = Date.now() - start;
   dialState.agents = Array.isArray(res.data?.agents) ? res.data.agents : [];
   const len = Math.max(1, dialState.agents.length);
   if (ticks) {
@@ -511,6 +651,39 @@ async function updateDashboardGatewayInfo() {
   const title = `${status} ${gatewayConfig.active}`;
   setTitle(dashboardContext, title.slice(0, 6));
 }
+
+// Export telemetry summary for dashboard access
+const TELEMETRY_EXPORT_PATH = path.join(CONFIG_DIR, 'telemetry-export.json');
+
+function exportTelemetryForDashboard() {
+  try {
+    const summary = getTelemetrySummary();
+    const data = {
+      ...summary,
+      exportedAt: Date.now(),
+      version: '1.1'
+    };
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+    fs.writeFileSync(TELEMETRY_EXPORT_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('[openclaw-v5] Failed to export telemetry:', e.message);
+  }
+}
+
+// Export telemetry periodically (every 10s)
+setInterval(exportTelemetryForDashboard, 10000);
+
+// Also export on each action
+const originalRecordTelemetry = recordTelemetry;
+global.recordTelemetry = function(...args) {
+  const result = originalRecordTelemetry(...args);
+  scheduleFlush();
+  // Immediate export on action
+  setTimeout(exportTelemetryForDashboard, 100);
+  return result;
+};
 
 ws.addEventListener('open', () => {
   send({ event: REGISTER_EVENT, uuid: PLUGIN_UUID });
