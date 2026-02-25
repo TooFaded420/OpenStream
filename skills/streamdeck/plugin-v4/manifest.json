@@ -1,0 +1,27 @@
+{
+  "Actions": [
+    { "Name": "TTS Toggle", "UUID": "com.openclaw.tts", "Icon": "images/tts.png", "Tooltip": "Toggle text-to-speech" },
+    { "Name": "Spawn Agent", "UUID": "com.openclaw.spawn", "Icon": "images/spawn.png", "Tooltip": "Spawn AI sub-agent with live activity" },
+    { "Name": "Status Check", "UUID": "com.openclaw.status", "Icon": "images/status.png", "Tooltip": "Check OpenClaw status with reconnection" },
+    { "Name": "Identity Sync", "UUID": "com.openclaw.identity", "Icon": "images/status.png", "Tooltip": "Show agent identity from IDENTITY.md" },
+    { "Name": "Toggle Demo Mode", "UUID": "com.openclaw.demotoggle", "Icon": "images/config.png", "Tooltip": "Toggle demo mode (no OpenClaw needed)" },
+    { "Name": "Web Search", "UUID": "com.openclaw.websearch", "Icon": "images/websearch.png", "Tooltip": "Search web with progress indicators" },
+    { "Name": "Force Reconnect", "UUID": "com.openclaw.reconnect", "Icon": "images/restart.png", "Tooltip": "Force reconnection with backoff" },
+    { "Name": "Subagents", "UUID": "com.openclaw.subagents", "Icon": "images/subagents.png", "Tooltip": "List active subagents" },
+    { "Name": "Node Status", "UUID": "com.openclaw.nodes", "Icon": "images/nodes.png", "Tooltip": "Check paired nodes" },
+    { "Name": "Session Info", "UUID": "com.openclaw.session", "Icon": "images/session.png", "Tooltip": "Session status with model info" }
+  ],
+  "Category": "OpenClaw Live",
+  "CategoryIcon": "images/openclaw.png",
+  "CodePathWin": "openclaw-live-activity.bat",
+  "Description": "OpenClaw with Chowder-powered Live Activity, Demo Mode, Identity Sync, and Reconnection",
+  "Name": "OpenClaw Live v4",
+  "Icon": "images/openclaw.png",
+  "UUID": "com.openclaw.streamdeck.v4",
+  "Version": "4.0.0",
+  "SDKVersion": 2,
+  "OS": [{ "Platform": "windows", "MinimumVersion": "10" }],
+  "Software": { "MinimumVersion": "6.0" },
+  "Author": "OpenClaw Community",
+  "URL": "https://openclaw.ai"
+}
