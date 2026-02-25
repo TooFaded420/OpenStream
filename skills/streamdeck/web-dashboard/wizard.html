@@ -26,12 +26,22 @@
   <div class="card">
     <div class="row">
       <div>
-        <label class="muted">Detect local ports (comma-separated)</label>
+        <label class="muted">Detect host</label>
+        <input id="host" value="127.0.0.1" />
+      </div>
+      <div>
+        <label class="muted">Detect ports (comma-separated)</label>
         <input id="ports" value="18790,18789,28790" />
       </div>
+    </div>
+    <div class="row">
       <div>
         <label class="muted">Quick preset</label>
         <button id="presetBtn">Apply 2-port preset (18790 + 18789)</button>
+      </div>
+      <div>
+        <label class="muted">Tip</label>
+        <div class="muted">For Mac Mini, set host to its LAN/Tailscale IP before Detect.</div>
       </div>
     </div>
     <button id="loadBtn">Load Config</button>
@@ -77,8 +87,9 @@ document.getElementById('presetBtn').onclick = ()=>{
 };
 
 document.getElementById('detectBtn').onclick = async ()=>{
+  const host = document.getElementById('host').value.trim() || '127.0.0.1';
   const ports = document.getElementById('ports').value.split(',').map(s=>s.trim()).filter(Boolean);
-  const cfg = await api('/api/detect-local', { method:'POST', body: JSON.stringify({ports}) });
+  const cfg = await api('/api/detect-local', { method:'POST', body: JSON.stringify({host, ports}) });
   setJson(cfg);
 };
 

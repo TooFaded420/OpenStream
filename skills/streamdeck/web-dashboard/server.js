@@ -55,12 +55,17 @@ const server = http.createServer(async (req,res)=>{
   if (p === '/api/detect-local' && req.method === 'POST') {
     let body=''; req.on('data',d=>body+=d); req.on('end', async ()=>{
       const cfg = loadCfg();
+      let host='127.0.0.1';
       let ports=['18790','18789','28790'];
-      try { const b = JSON.parse(body||'{}'); if (Array.isArray(b.ports)) ports = b.ports.map(String); } catch {}
+      try {
+        const b = JSON.parse(body||'{}');
+        if (typeof b.host === 'string' && b.host.trim()) host = b.host.trim();
+        if (Array.isArray(b.ports)) ports = b.ports.map(String);
+      } catch {}
       const gateways = { ...(cfg.gateways||{}) };
       for (const pt of ports){
         const name = pt==='18790' ? 'origin-main' : (pt==='18789' ? 'zero-mac' : `local-${pt}`);
-        const url = `http://127.0.0.1:${pt}`;
+        const url = `http://${host}:${pt}`;
         const t = await testGateway(url, gateways[name]?.token || null);
         if (t.ok) gateways[name] = { url, token: gateways[name]?.token || null };
       }
