@@ -4,16 +4,10 @@ set PORT=%1
 if "%PORT%"=="" set PORT=8787
 
 echo ===================================
-echo OpenClaw Dashboard Server
+echo OpenClaw Dashboard Server (Node)
 echo ===================================
-echo.
-echo Starting server on port %PORT%...
-echo.
-echo ACCESS:
-echo http://localhost:%PORT%
-echo.
+echo Starting on http://localhost:%PORT%
 echo Press Ctrl+C to stop
-echo ===================================
 cd /d "%~dp0"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0host-server.ps1" -Port %PORT%
+node server.js %PORT%
 pause
