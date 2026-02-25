@@ -61,6 +61,7 @@
       "Name": "Dial: Model",
       "Tooltip": "Rotate: cycle models | Press: apply",
       "Icon": "images/session",
+      "Controllers": ["Encoder"],
       "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
       "Encoder": {
         "layout": "$A1",
@@ -73,6 +74,7 @@
       "Name": "Dial: TTS",
       "Tooltip": "Rotate: volume | Press: mute toggle",
       "Icon": "images/tts",
+      "Controllers": ["Encoder"],
       "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
       "Encoder": {
         "layout": "$A1",
@@ -85,6 +87,7 @@
       "Name": "Dial: Agents",
       "Tooltip": "Rotate: cycle agents | Press: select",
       "Icon": "images/subagents",
+      "Controllers": ["Encoder"],
       "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
       "Encoder": {
         "layout": "$A1",
@@ -97,6 +100,7 @@
       "Name": "Dial: Profile",
       "Tooltip": "Rotate: cycle profiles | Press: ping",
       "Icon": "images/restart",
+      "Controllers": ["Encoder"],
       "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
       "Encoder": {
         "layout": "$A1",
