@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const args = process.argv.slice(2);
 const getArg = (name) => {
@@ -133,6 +134,7 @@ const defaultTitles = {
   'com.openclaw.v5.websearch': 'Search',
   'com.openclaw.v5.reconnect': 'Ping',
   'com.openclaw.v5.gateway.next': 'Gateway',
+  'com.openclaw.v5.setup.wizard': 'Wizard',
   'com.openclaw.v5.dial.model': 'Model',
   'com.openclaw.v5.dial.tts': 'TTS',
   'com.openclaw.v5.dial.agents': 'Agents',
@@ -265,6 +267,21 @@ function backToDefault(context, action) {
   setTimeout(() => setTitle(context, defaultTitles[action] || 'Ready'), 1800);
 }
 
+function launchSetupWizard() {
+  try {
+    const workspace = path.join(process.env.USERPROFILE || process.env.HOME, '.openclaw', 'workspace', 'skills', 'streamdeck', 'web-dashboard');
+    const startBat = path.join(workspace, 'START-SERVER.bat');
+    // Start local dashboard/wizard server on 8787 (best-effort)
+    spawn('cmd.exe', ['/c', 'start', '""', startBat, '8787'], { detached: true, stdio: 'ignore' }).unref();
+    // Open wizard in browser
+    spawn('cmd.exe', ['/c', 'start', '""', 'http://localhost:8787/wizard'], { detached: true, stdio: 'ignore' }).unref();
+    return true;
+  } catch (e) {
+    console.error('[openclaw-v5] launchSetupWizard failed:', e.message);
+    return false;
+  }
+}
+
 async function handleKeyUp(evt) {
   const { context, action } = evt;
   console.log('[openclaw-v5] keyUp action=', action);
@@ -332,6 +349,13 @@ async function handleKeyUp(evt) {
     const res = await callGateway('/web.search', 'POST', { query: cfg.defaultSearch, count: 1 });
     if (res.ok) showOk(context, 'FND');
     else showErr(context, errCode(res));
+    return backToDefault(context, action);
+  }
+
+  if (action === 'com.openclaw.v5.setup.wizard') {
+    const ok = launchSetupWizard();
+    if (ok) showOk(context, 'OPEN');
+    else showErr(context, 'ERR');
     return backToDefault(context, action);
   }
 

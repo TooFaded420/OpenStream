@@ -57,6 +57,13 @@
       "States": [{ "Image": "images/restart", "Title": "Reconnect" }]
     },
     {
+      "UUID": "com.openclaw.v5.setup.wizard",
+      "Name": "Gateway Setup Wizard",
+      "Tooltip": "Open local gateway setup wizard",
+      "Icon": "images/config",
+      "States": [{ "Image": "images/config", "Title": "Wizard" }]
+    },
+    {
       "UUID": "com.openclaw.v5.gateway.next",
       "Name": "Gateway Next",
       "Tooltip": "Cycle to next gateway and ping",

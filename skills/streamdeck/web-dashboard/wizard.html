@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenClaw Gateway Setup Wizard</title>
+  <style>
+    body{font-family:Consolas,monospace;background:#0b0f12;color:#d7ffe0;margin:0}
+    .wrap{max-width:900px;margin:24px auto;padding:16px}
+    .card{border:1px solid #2b4c3c;background:#111a16;border-radius:10px;padding:14px;margin-bottom:12px}
+    h1{margin:0 0 8px;color:#8aff7a}
+    label{display:block;font-size:12px;color:#8db69a;margin:8px 0 4px}
+    input{width:100%;padding:8px;border-radius:8px;border:1px solid #2b4c3c;background:#0b120f;color:#d7ffe0}
+    .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    button{padding:9px 12px;border:1px solid #2b4c3c;background:#0d1a14;color:#d7ffe0;border-radius:8px;cursor:pointer}
+    .muted{color:#8db69a;font-size:12px}
+    pre{background:#0a120e;border:1px solid #2b4c3c;padding:10px;border-radius:8px;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>OpenClaw Gateway Setup Wizard</h1>
+      <div class="muted">Configure local/remote gateways without editing JSON manually.</div>
+    </div>
+
+    <div class="card">
+      <h3>1) Detect local gateways</h3>
+      <div class="row">
+        <input id="ports" value="18790,18789,28790" />
+        <button id="detectBtn">Detect</button>
+        <button id="loadBtn">Reload Config</button>
+      </div>
+      <div class="muted">Scans localhost ports and adds healthy instances.</div>
+    </div>
+
+    <div class="card">
+      <h3>2) Add / Update gateways</h3>
+      <div id="gwList"></div>
+      <button id="addBtn">+ Add Gateway</button>
+    </div>
+
+    <div class="card">
+      <h3>3) Save</h3>
+      <button id="saveBtn">Save Config</button>
+      <div class="muted">Saved to: %USERPROFILE%\.openclaw\streamdeck-gateways.json</div>
+    </div>
+
+    <div class="card">
+      <h3>Current JSON</h3>
+      <pre id="jsonOut">loading...</pre>
+    </div>
+  </div>
+
+<script>
+let cfg = { active:'origin-main', gateways:{} };
+
+async function api(path, opts={}){
+  const r = await fetch(path, {headers:{'content-type':'application/json'}, ...opts});
+  const t = await r.text();
+  try{return JSON.parse(t)}catch{return t}
+}
+
+function render(){
+  const root = document.getElementById('gwList');
+  root.innerHTML='';
+  const names = Object.keys(cfg.gateways||{});
+  if(!names.length){ root.innerHTML='<div class="muted">No gateways yet.</div>'; }
+  for(const name of names){
+    const g = cfg.gateways[name] || {};
+    const row = document.createElement('div');
+    row.className='card';
+    row.innerHTML = `
+      <label>Name</label><input data-k="name" value="${name}">
+      <label>URL</label><input data-k="url" value="${g.url||''}">
+      <label>Token (optional)</label><input data-k="token" value="${g.token||''}">
+      <label>Active</label><input type="radio" name="activeGw" ${cfg.active===name?'checked':''}>
+      <button data-del="1">Remove</button>`;
+
+    const [nameIn,urlIn,tokIn,radio,del] = row.querySelectorAll('input,button');
+    nameIn.onchange = ()=>{
+      const newName = nameIn.value.trim(); if(!newName || newName===name) return;
+      cfg.gateways[newName]=cfg.gateways[name]; delete cfg.gateways[name];
+      if(cfg.active===name) cfg.active=newName; render();
+    };
+    urlIn.oninput = ()=>{ cfg.gateways[name].url = urlIn.value.trim(); sync(); };
+    tokIn.oninput = ()=>{ cfg.gateways[name].token = tokIn.value.trim() || null; sync(); };
+    radio.onchange = ()=>{ cfg.active = name; sync(); };
+    del.onclick = ()=>{ delete cfg.gateways[name]; if(cfg.active===name) cfg.active = Object.keys(cfg.gateways)[0]||''; render(); };
+
+    root.appendChild(row);
+  }
+  sync();
+}
+
+function sync(){ document.getElementById('jsonOut').textContent = JSON.stringify(cfg,null,2); }
+
+document.getElementById('addBtn').onclick = ()=>{
+  let base='gateway'; let i=1; while(cfg.gateways[`${base}-${i}`]) i++;
+  const n = `${base}-${i}`;
+  cfg.gateways[n] = { url:'http://127.0.0.1:18790', token:null };
+  if(!cfg.active) cfg.active=n;
+  render();
+};
+
+document.getElementById('loadBtn').onclick = async ()=>{
+  cfg = await api('/api/gateway-config');
+  render();
+};
+
+document.getElementById('detectBtn').onclick = async ()=>{
+  const ports = document.getElementById('ports').value.split(',').map(s=>s.trim()).filter(Boolean);
+  cfg = await api('/api/detect-local', {method:'POST', body:JSON.stringify({ports})});
+  render();
+};
+
+document.getElementById('saveBtn').onclick = async ()=>{
+  await api('/api/gateway-config', {method:'POST', body:JSON.stringify(cfg)});
+  alert('Saved gateway config.');
+};
+
+(async()=>{ cfg = await api('/api/gateway-config'); render(); })();
+</script>
+</body>
+</html>
