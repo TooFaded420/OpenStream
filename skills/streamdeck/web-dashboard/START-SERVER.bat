@@ -12,10 +12,8 @@ echo.
 echo ACCESS:
 echo http://localhost:%PORT%
 echo.
-echo (Phone must be on same WiFi)
-echo.
 echo Press Ctrl+C to stop
 echo ===================================
 cd /d "%~dp0"
-python -m http.server %PORT%
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0host-server.ps1" -Port %PORT%
 pause

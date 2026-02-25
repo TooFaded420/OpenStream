@@ -6,87 +6,37 @@
   <title>OpenClaw Command Deck</title>
   <style>
     :root {
-      --bg:#070b08;
-      --panel:#0d1511;
-      --line:#294636;
-      --pip:#8aff7a;
-      --pip-dim:#4fa95a;
-      --alert:#ff6b57;
-      --lobster:#ff5a4f;
-      --text:#d5ffd2;
-      --muted:#83aa86;
+      --bg:#070b08;--panel:#0d1511;--line:#294636;--primary:#8aff7a;--dim:#4fa95a;--alert:#ff6b57;--accent:#ff5a4f;--text:#d5ffd2;--muted:#83aa86;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Consolas,Monaco,'Segoe UI',monospace;
-      color:var(--text);
-      background:radial-gradient(circle at top,#0d1a12 0%, #070b08 45%);
-      min-height:100vh;
-    }
-    .scan::before{
-      content:"";
-      position:fixed;inset:0;
-      pointer-events:none;
-      background:repeating-linear-gradient(to bottom,rgba(138,255,122,.04),rgba(138,255,122,.04) 1px,transparent 1px,transparent 3px);
-      mix-blend-mode:screen;
-    }
-    .wrap{max-width:1200px;margin:0 auto;padding:18px}
-    .top{
-      display:grid;grid-template-columns:2fr 1fr;gap:14px;
-    }
-    .panel{
-      border:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(18,30,23,.8),rgba(8,14,10,.9));
-      border-radius:10px;
-      box-shadow:0 0 0 1px rgba(138,255,122,.05) inset;
-      padding:12px;
-    }
-    h1{margin:0;font-size:22px;letter-spacing:1px;color:var(--pip)}
-    .sub{color:var(--muted);font-size:12px;margin-top:4px}
-    .badge{display:inline-block;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:var(--pip-dim)}
-    .grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;margin-top:14px}
-    .stat{padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a130e}
-    .stat .k{font-size:11px;color:var(--muted)}
-    .stat .v{font-size:22px;margin-top:4px;color:var(--pip)}
-    .v.alert{color:var(--alert)}
-
-    .main{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}
-    .section-title{font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
-    .list{display:flex;flex-direction:column;gap:8px}
-    .item{display:flex;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--line);border-radius:7px;background:#0a130e}
-    .item .name{color:var(--text)}
-    .item .meta{color:var(--muted);font-size:12px}
-
-    .controls{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    button{
-      cursor:pointer;
-      border:1px solid var(--line);
-      color:var(--text);
-      background:#0d1c14;
-      border-radius:8px;
-      padding:10px;
-      font-family:inherit;
-    }
-    button:hover{border-color:var(--pip-dim);box-shadow:0 0 0 1px rgba(138,255,122,.15) inset}
-    .danger{border-color:#5a2a24;color:#ffb6ac}
-
-    .footer{margin-top:12px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;align-items:center}
-    .lobster{color:var(--lobster)}
-    .small{font-size:11px;color:var(--muted)}
-
-    @media (max-width: 900px){
-      .top,.main{grid-template-columns:1fr}
-      .grid{grid-template-columns:repeat(2,minmax(120px,1fr))}
-    }
+    body[data-theme="command"] { --bg:#0a0d12;--panel:#121824;--line:#2e3f60;--primary:#82b1ff;--dim:#7393c6;--alert:#ff7676;--accent:#ff9f7a;--text:#e6ecff;--muted:#9db0d8; }
+    body[data-theme="coral"] { --bg:#140b0b;--panel:#1f1212;--line:#5b2f2f;--primary:#ff9f8f;--dim:#d98679;--alert:#ffd0c6;--accent:#ff5a4f;--text:#ffe9e5;--muted:#d5a8a1; }
+    *{box-sizing:border-box} body{margin:0;font-family:Consolas,monospace;color:var(--text);background:radial-gradient(circle at top,var(--panel) 0%, var(--bg) 45%);min-height:100vh}
+    .scan::before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.03),rgba(255,255,255,.03) 1px,transparent 1px,transparent 3px)}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px}.panel{border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 85%, #000 15%);border-radius:10px;padding:12px}
+    .top{display:grid;grid-template-columns:2fr 1fr;gap:14px}.main{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}
+    h1{margin:0;color:var(--primary);font-size:22px}.sub{font-size:12px;color:var(--muted)}
+    .toolbar{display:flex;gap:8px;align-items:center;margin-top:10px}.badge{border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:var(--dim)}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;margin-top:14px}.stat{padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.18)}
+    .k{font-size:11px;color:var(--muted)} .v{font-size:22px;color:var(--primary)} .alert{color:var(--alert)}
+    .section-title{font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:1px}.list{display:flex;flex-direction:column;gap:8px}
+    .item{display:flex;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--line);border-radius:7px;background:rgba(0,0,0,.15)}
+    .controls{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.device-map{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    button{cursor:pointer;border:1px solid var(--line);color:var(--text);background:rgba(0,0,0,.2);border-radius:8px;padding:10px;font-family:inherit}
+    button:hover{border-color:var(--primary)}
+    .footer{margin-top:12px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between}
+    @media (max-width:900px){.top,.main{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
   </style>
 </head>
-<body class="scan">
+<body class="scan" data-theme="pip">
   <div class="wrap">
     <div class="top">
       <div class="panel">
         <h1>OPENCLAW // COMMAND CENTER</h1>
-        <div class="sub">Pip-Boy x Lobster Ops • Stream Deck Fleet Control</div>
+        <div class="sub">Pip-Boy x Lobster Ops • Fleet control + visual telemetry</div>
+        <div class="toolbar">
+          <span class="badge" id="ws-status">WS: connecting</span>
+          <button id="theme-btn">Theme: pip</button>
+        </div>
         <div class="grid">
           <div class="stat"><div class="k">Gateway</div><div id="s-gateway" class="v">--</div></div>
           <div class="stat"><div class="k">Model</div><div id="s-model" class="v">--</div></div>
@@ -95,10 +45,8 @@
         </div>
       </div>
       <div class="panel">
-        <div class="section-title">LINK STATUS</div>
-        <div class="item"><span class="name">Plugin v5</span><span id="l-plugin" class="badge">unknown</span></div>
-        <div class="item"><span class="name">Dial Pack</span><span id="l-dials" class="badge">v1</span></div>
-        <div class="item"><span class="name">Last Refresh</span><span id="l-refresh" class="meta">--</span></div>
+        <div class="section-title">DEVICE MAP</div>
+        <div id="device-map" class="device-map"></div>
       </div>
     </div>
 
@@ -115,98 +63,70 @@
           <button id="btn-tts">Toggle TTS</button>
           <button id="btn-spawn">Spawn Helper</button>
           <button id="btn-session">Session Status</button>
-          <button id="btn-search" class="danger">Web Search</button>
+          <button id="btn-search">Web Search</button>
         </div>
       </div>
     </div>
 
     <div class="footer">
-      <div>Theme: <span class="lobster">LOBSTER COMMAND</span></div>
-      <div class="small">localhost dashboard • auto-refresh 10s</div>
+      <div>Theme stack: pip / command / coral-lobster</div>
+      <div>Auto-refresh 10s + gateway websocket listener</div>
     </div>
   </div>
 
-  <script>
-    const apiBase = 'http://127.0.0.1:18790';
-    const el = (id)=>document.getElementById(id);
-    const actions = [];
+<script>
+const apiBase='http://127.0.0.1:18790';
+const el=id=>document.getElementById(id); const actions=[];
+const themes=['pip','command','coral']; let themeIx=0;
+function setTheme(i){ themeIx=i%themes.length; document.body.dataset.theme=themes[themeIx]; el('theme-btn').textContent='Theme: '+themes[themeIx]; }
+el('theme-btn').onclick=()=>setTheme(themeIx+1);
 
-    function pushAction(name, result='ok') {
-      actions.unshift({ name, result, at: new Date().toLocaleTimeString() });
-      if (actions.length > 12) actions.pop();
-      renderActions();
-    }
+function pushAction(name,result='ok'){ actions.unshift({name,result,at:new Date().toLocaleTimeString()}); if(actions.length>14)actions.pop(); renderActions(); }
+function renderActions(){ const r=el('action-list'); r.innerHTML=''; if(!actions.length){ r.innerHTML='<div class="item"><span>No activity yet.</span></div>'; return; }
+  for(const a of actions){ const c=a.result==='ok'?'var(--primary)':'var(--alert)'; const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${a.name}</span><span style="color:${c}">${a.result.toUpperCase()} • ${a.at}</span>`; r.appendChild(d);} }
+async function jfetch(path,opts={}){ const r=await fetch(apiBase+path,{headers:{'content-type':'application/json'},...opts}); let data={}; try{data=await r.json()}catch{} return {ok:r.ok,data}; }
 
-    function renderActions(){
-      const root = el('action-list');
-      root.innerHTML = '';
-      if (!actions.length) {
-        root.innerHTML = '<div class="item"><span class="meta">No activity yet.</span></div>';
-        return;
-      }
-      for (const a of actions){
-        const color = a.result === 'ok' ? '#8aff7a' : '#ff6b57';
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<span class="name">${a.name}</span><span class="meta" style="color:${color}">${a.result.toUpperCase()} • ${a.at}</span>`;
-        root.appendChild(div);
-      }
-    }
+async function refresh(){
+  const [st,ses,subs,nodes]=await Promise.all([
+    jfetch('/status').catch(()=>({ok:false,data:{}})), jfetch('/session.status').catch(()=>({ok:false,data:{}})),
+    jfetch('/subagents.list').catch(()=>({ok:false,data:{}})), jfetch('/nodes.status').catch(()=>({ok:false,data:{}}))
+  ]);
+  el('s-gateway').textContent=st.ok?'ONLINE':'OFFLINE'; el('s-gateway').className='v'+(st.ok?'':' alert');
+  el('s-model').textContent=(ses.data?.model||'--').split('/').pop().slice(0,12)||'--';
+  el('s-agents').textContent=Array.isArray(subs.data?.agents)?subs.data.agents.length:'--';
+  el('s-nodes').textContent=Array.isArray(nodes.data?.nodes)?nodes.data.nodes.length:'--';
+}
 
-    async function jfetch(path, opts={}) {
-      const r = await fetch(apiBase + path, {
-        headers: {'content-type':'application/json'},
-        ...opts
-      });
-      let data = {};
-      try { data = await r.json(); } catch {}
-      return { ok:r.ok, data };
-    }
+async function loadDeviceMap(){
+  const root=el('device-map'); root.innerHTML='';
+  try{
+    const r=await fetch('/api/device-map'); const map=await r.json();
+    const keys=Object.keys(map||{});
+    if(!keys.length){ root.innerHTML='<div class="item"><span>No mapped devices yet</span></div>'; return; }
+    for(const serial of keys){ const role=map[serial]?.role||'unknown'; const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${serial}</span><span>${role}</span>`; root.appendChild(d);}    
+  }catch{ root.innerHTML='<div class="item"><span>Device map unavailable</span></div>'; }
+}
 
-    async function refresh(){
-      const [st, ses, subs, nodes] = await Promise.all([
-        jfetch('/status').catch(()=>({ok:false,data:{}})),
-        jfetch('/session.status').catch(()=>({ok:false,data:{}})),
-        jfetch('/subagents.list').catch(()=>({ok:false,data:{}})),
-        jfetch('/nodes.status').catch(()=>({ok:false,data:{}})),
-      ]);
+async function runAction(label,path,body){ try{ const res=await jfetch(path, body?{method:'POST',body:JSON.stringify(body)}:{}); pushAction(label,res.ok?'ok':'err'); await refresh(); } catch{ pushAction(label,'err'); }}
+el('btn-refresh').onclick=()=>refresh().then(()=>pushAction('Refresh','ok')).catch(()=>pushAction('Refresh','err'));
+el('btn-status').onclick=()=>runAction('Gateway Ping','/status');
+el('btn-session').onclick=()=>runAction('Session Status','/session.status');
+el('btn-search').onclick=()=>runAction('Web Search','/web.search',{query:'openclaw stream deck ideas',count:1});
+el('btn-spawn').onclick=()=>runAction('Spawn Helper','/spawn',{task:'Quick assistance',agentId:'helper'});
+el('btn-tts').onclick=async()=>{ try{ const get=await jfetch('/config.get'); const en=!!(get.data?.messages?.tts?.enabled); await runAction('Toggle TTS','/config.patch',{path:'messages.tts.enabled',value:!en}); } catch{ pushAction('Toggle TTS','err'); } };
 
-      el('s-gateway').textContent = st.ok ? 'ONLINE' : 'OFFLINE';
-      el('s-gateway').className = 'v' + (st.ok ? '' : ' alert');
-      el('s-model').textContent = (ses.data?.model || '--').split('/').pop().slice(0,12) || '--';
-      el('s-agents').textContent = Array.isArray(subs.data?.agents) ? subs.data.agents.length : '--';
-      el('s-nodes').textContent = Array.isArray(nodes.data?.nodes) ? nodes.data.nodes.length : '--';
+function connectGatewayWs(){
+  try{
+    const ws=new WebSocket('ws://127.0.0.1:18790/ws');
+    ws.onopen=()=>{ el('ws-status').textContent='WS: live'; pushAction('Gateway WS connected','ok'); };
+    ws.onmessage=(ev)=>{ try{ const m=JSON.parse(ev.data); if(m?.event) pushAction('WS '+m.event,'ok'); }catch{} };
+    ws.onerror=()=>{ el('ws-status').textContent='WS: error'; };
+    ws.onclose=()=>{ el('ws-status').textContent='WS: closed'; setTimeout(connectGatewayWs,3000); };
+  }catch{ el('ws-status').textContent='WS: unavailable'; }
+}
 
-      el('l-plugin').textContent = st.ok ? 'connected' : 'offline';
-      el('l-refresh').textContent = new Date().toLocaleTimeString();
-    }
-
-    async function runAction(label, path, body){
-      try {
-        const res = await jfetch(path, body ? {method:'POST', body:JSON.stringify(body)} : {});
-        pushAction(label, res.ok ? 'ok' : 'err');
-        await refresh();
-      } catch {
-        pushAction(label, 'err');
-      }
-    }
-
-    el('btn-refresh').onclick = ()=>refresh().then(()=>pushAction('Refresh','ok')).catch(()=>pushAction('Refresh','err'));
-    el('btn-status').onclick = ()=>runAction('Gateway Ping','/status');
-    el('btn-session').onclick = ()=>runAction('Session Status','/session.status');
-    el('btn-search').onclick = ()=>runAction('Web Search','/web.search',{query:'openclaw stream deck ideas',count:1});
-    el('btn-spawn').onclick = ()=>runAction('Spawn Helper','/spawn',{task:'Quick assistance',agentId:'helper'});
-    el('btn-tts').onclick = async ()=>{
-      try {
-        const get = await jfetch('/config.get');
-        const enabled = !!(get.data?.messages?.tts?.enabled);
-        await runAction('Toggle TTS','/config.patch',{path:'messages.tts.enabled',value:!enabled});
-      } catch { pushAction('Toggle TTS','err'); }
-    };
-
-    refresh();
-    renderActions();
-    setInterval(refresh, 10000);
-  </script>
+setTheme(0); refresh(); loadDeviceMap(); renderActions(); connectGatewayWs();
+setInterval(refresh,10000); setInterval(loadDeviceMap,15000);
+</script>
 </body>
 </html>
