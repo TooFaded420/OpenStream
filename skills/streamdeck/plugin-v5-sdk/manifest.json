@@ -20,12 +20,47 @@
       "Tooltip": "Spawn helper agent",
       "Icon": "images/spawn",
       "States": [{ "Image": "images/spawn", "Title": "Spawn" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.session",
+      "Name": "OpenClaw Session",
+      "Tooltip": "Session status",
+      "Icon": "images/session",
+      "States": [{ "Image": "images/session", "Title": "Session" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.subagents",
+      "Name": "OpenClaw Subagents",
+      "Tooltip": "List active subagents",
+      "Icon": "images/subagents",
+      "States": [{ "Image": "images/subagents", "Title": "Agents" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.nodes",
+      "Name": "OpenClaw Nodes",
+      "Tooltip": "Check paired nodes",
+      "Icon": "images/nodes",
+      "States": [{ "Image": "images/nodes", "Title": "Nodes" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.websearch",
+      "Name": "OpenClaw Search",
+      "Tooltip": "Quick web search",
+      "Icon": "images/websearch",
+      "States": [{ "Image": "images/websearch", "Title": "Search" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.reconnect",
+      "Name": "OpenClaw Reconnect",
+      "Tooltip": "Reconnect/ping gateway",
+      "Icon": "images/restart",
+      "States": [{ "Image": "images/restart", "Title": "Reconnect" }]
     }
   ],
   "SDKVersion": 2,
   "Name": "OpenClaw SDK v5",
   "Description": "Native SDK Stream Deck plugin for OpenClaw",
-  "Version": "5.0.0",
+  "Version": "5.1.0",
   "Author": "OpenClaw Community",
   "URL": "https://openclaw.ai",
   "Category": "OpenClaw",
