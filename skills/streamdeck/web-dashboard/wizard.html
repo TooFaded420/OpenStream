@@ -43,6 +43,7 @@
     <div class="card">
       <h3>3) Validate + Save</h3>
       <button id="testBtn">Test All Gateways</button>
+      <button id="bestBtn">Apply Best Gateway</button>
       <button id="saveBtn">Save Config</button>
       <div class="muted">Saved to: %USERPROFILE%\.openclaw\streamdeck-gateways.json</div>
       <pre id="testOut">No tests yet.</pre>
@@ -130,6 +131,19 @@ document.getElementById('testBtn').onclick = async ()=>{
     lines.push(`${k}: ${v.code}${v.latencyMs?` (${v.latencyMs}ms)`:''}`);
   }
   out.textContent = lines.join('\n') || 'No gateways';
+};
+
+document.getElementById('bestBtn').onclick = async ()=>{
+  const out = document.getElementById('testOut');
+  out.textContent = 'Selecting best gateway...';
+  const res = await api('/api/apply-best-gateway', { method:'POST' });
+  if (res.ok) {
+    out.textContent = `Active set to ${res.active} (${res.latencyMs}ms)`;
+    cfg = await api('/api/gateway-config');
+    render();
+  } else {
+    out.textContent = `Failed: ${res.error||'No healthy gateways'}`;
+  }
 };
 
 (async()=>{ cfg = await api('/api/gateway-config'); render(); })();

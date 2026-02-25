@@ -145,6 +145,34 @@ try {
           $res.ContentType='application/json; charset=utf-8'; $res.StatusCode=200
           $res.OutputStream.Write($bytes,0,$bytes.Length)
         }
+        '^/api/apply-best-gateway$' {
+          $cfg = Load-GatewayCfg
+          $best = $null
+          foreach ($k in $cfg.gateways.Keys) {
+            $g = $cfg.gateways[$k]
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            try {
+              $headers = @{}
+              if ($g.token) { $headers['Authorization'] = "Bearer $($g.token)" }
+              Invoke-RestMethod -Uri "$($g.url)/status" -Method Get -Headers $headers -TimeoutSec 3 | Out-Null
+              $sw.Stop()
+              $lat = [int]$sw.ElapsedMilliseconds
+              if (-not $best -or $lat -lt $best.latencyMs) {
+                $best = [ordered]@{ key = $k; latencyMs = $lat }
+              }
+            } catch { $sw.Stop() }
+          }
+          if ($best) {
+            $cfg.active = $best.key
+            Save-GatewayCfg $cfg
+            $payload = (@{ ok = $true; active = $best.key; latencyMs = $best.latencyMs } | ConvertTo-Json)
+          } else {
+            $payload = (@{ ok = $false; error = 'No healthy gateways found' } | ConvertTo-Json)
+          }
+          $bytes = [Text.Encoding]::UTF8.GetBytes($payload)
+          $res.ContentType='application/json; charset=utf-8'; $res.StatusCode=200
+          $res.OutputStream.Write($bytes,0,$bytes.Length)
+        }
         default {
           $res.StatusCode = 404
           $bytes = [Text.Encoding]::UTF8.GetBytes('Not Found')
