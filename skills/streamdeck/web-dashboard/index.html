@@ -20,6 +20,8 @@
     .k{font-size:11px;color:var(--muted)} .v{font-size:22px;color:var(--primary)} .alert{color:var(--alert)}
     .section-title{font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:1px}.list{display:flex;flex-direction:column;gap:8px}
     .item{display:flex;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--line);border-radius:7px;background:rgba(0,0,0,.15)}
+    .item.err{border-color:#7a3a33;background:rgba(255,90,79,.08)}
+    .claw{display:inline-block;margin-right:6px}
     .controls{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.device-map{display:flex;flex-direction:column;gap:8px;margin-top:10px}
     button{cursor:pointer;border:1px solid var(--line);color:var(--text);background:rgba(0,0,0,.2);border-radius:8px;padding:10px;font-family:inherit}
     button:hover{border-color:var(--primary)}
@@ -83,7 +85,7 @@ el('theme-btn').onclick=()=>setTheme(themeIx+1);
 
 function pushAction(name,result='ok'){ actions.unshift({name,result,at:new Date().toLocaleTimeString()}); if(actions.length>14)actions.pop(); renderActions(); }
 function renderActions(){ const r=el('action-list'); r.innerHTML=''; if(!actions.length){ r.innerHTML='<div class="item"><span>No activity yet.</span></div>'; return; }
-  for(const a of actions){ const c=a.result==='ok'?'var(--primary)':'var(--alert)'; const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${a.name}</span><span style="color:${c}">${a.result.toUpperCase()} • ${a.at}</span>`; r.appendChild(d);} }
+  for(const a of actions){ const c=a.result==='ok'?'var(--primary)':'var(--alert)'; const d=document.createElement('div'); d.className='item'+(a.result==='ok'?'':' err'); const claw=a.result==='ok'?'':'<span class="claw">🦞</span>'; d.innerHTML=`<span>${claw}${a.name}</span><span style="color:${c}">${a.result.toUpperCase()} • ${a.at}</span>`; r.appendChild(d);} }
 async function jfetch(path,opts={}){ const r=await fetch(apiBase+path,{headers:{'content-type':'application/json'},...opts}); let data={}; try{data=await r.json()}catch{} return {ok:r.ok,data}; }
 
 async function refresh(){
