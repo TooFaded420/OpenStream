@@ -57,6 +57,13 @@
       "States": [{ "Image": "images/restart", "Title": "Reconnect" }]
     },
     {
+      "UUID": "com.openclaw.v5.gateway.next",
+      "Name": "Gateway Next",
+      "Tooltip": "Cycle to next gateway and ping",
+      "Icon": "images/restart",
+      "States": [{ "Image": "images/restart", "Title": "Gateway" }]
+    },
+    {
       "UUID": "com.openclaw.v5.dial.model",
       "Name": "Dial: Model",
       "Tooltip": "Rotate: cycle models | Press: apply",
@@ -97,22 +104,22 @@
     },
     {
       "UUID": "com.openclaw.v5.dial.profile",
-      "Name": "Dial: Profile",
-      "Tooltip": "Rotate: cycle profiles | Press: ping",
+      "Name": "Dial: Gateway",
+      "Tooltip": "Rotate: preview gateways | Press: apply + ping",
       "Icon": "images/restart",
       "Controllers": ["Encoder"],
       "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
       "Encoder": {
         "layout": "$A1",
         "Icon": "images/restart",
-        "Title": "Profile"
+        "Title": "Gateway"
       }
     }
   ],
   "SDKVersion": 2,
   "Name": "OpenClaw SDK v5",
-  "Description": "Native SDK Stream Deck plugin for OpenClaw with Dial Pack v1",
-  "Version": "5.2.0",
+  "Description": "Native SDK Stream Deck plugin for OpenClaw with Dial Pack v1 + Gateway Switcher v1",
+  "Version": "5.3.0",
   "Author": "OpenClaw Community",
   "URL": "https://openclaw.ai",
   "Category": "OpenClaw",
