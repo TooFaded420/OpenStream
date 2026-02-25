@@ -64,7 +64,20 @@ function showBusy(context, title = '...') { setTitle(context, title); }
 function showOk(context, title = 'OK') { setTitle(context, title); }
 function showErr(context, title = 'ERR') { setTitle(context, title); }
 
+function errCode(res) {
+  if (!res) return 'ERR';
+  if (res.status === 401 || res.status === 403) return 'AUTH';
+  if (res.status === 404) return 'NF';
+  if (res.status === 0) {
+    const msg = String(res.data?.error || '').toLowerCase();
+    if (msg.includes('abort')) return 'TIME';
+    return 'OFF';
+  }
+  return 'ERR';
+}
+
 async function callGateway(path, method = 'GET', body) {
+  console.log('[openclaw-v5] api', method, path);
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), cfg.timeoutMs);
   try {
@@ -91,6 +104,7 @@ function backToDefault(context, action) {
 
 async function handleKeyUp(evt) {
   const { context, action } = evt;
+  console.log('[openclaw-v5] keyUp action=', action);
   showBusy(context);
 
   if (action === 'com.openclaw.v5.status' || action === 'com.openclaw.v5.reconnect') {
@@ -98,7 +112,7 @@ async function handleKeyUp(evt) {
     if (res.ok) {
       const latency = String(res.data?.latencyMs ?? 'OK');
       showOk(context, latency.slice(0, 4));
-    } else showErr(context, 'OFF');
+    } else showErr(context, errCode(res));
     return backToDefault(context, action);
   }
 
@@ -110,7 +124,7 @@ async function handleKeyUp(evt) {
       value: !enabled
     });
     if (setRes.ok) showOk(context, !enabled ? 'ON' : 'OFF');
-    else showErr(context);
+    else showErr(context, errCode(setRes));
     return backToDefault(context, action);
   }
 
@@ -120,7 +134,7 @@ async function handleKeyUp(evt) {
       agentId: 'helper'
     });
     if (res.ok) showOk(context, 'SPWN');
-    else showErr(context);
+    else showErr(context, errCode(res));
     return backToDefault(context, action);
   }
 
@@ -129,7 +143,7 @@ async function handleKeyUp(evt) {
     if (res.ok) {
       const model = String(res.data?.model || 'OK').split('/').pop();
       showOk(context, model.slice(0, 4));
-    } else showErr(context);
+    } else showErr(context, errCode(res));
     return backToDefault(context, action);
   }
 
@@ -138,7 +152,7 @@ async function handleKeyUp(evt) {
     if (res.ok) {
       const count = Array.isArray(res.data?.agents) ? res.data.agents.length : 0;
       showOk(context, `${count}`);
-    } else showErr(context);
+    } else showErr(context, errCode(res));
     return backToDefault(context, action);
   }
 
@@ -147,14 +161,14 @@ async function handleKeyUp(evt) {
     if (res.ok) {
       const count = Array.isArray(res.data?.nodes) ? res.data.nodes.length : 0;
       showOk(context, `${count}`);
-    } else showErr(context);
+    } else showErr(context, errCode(res));
     return backToDefault(context, action);
   }
 
   if (action === 'com.openclaw.v5.websearch') {
     const res = await callGateway('/web.search', 'POST', { query: cfg.defaultSearch, count: 1 });
     if (res.ok) showOk(context, 'FND');
-    else showErr(context);
+    else showErr(context, errCode(res));
     return backToDefault(context, action);
   }
 
@@ -261,6 +275,7 @@ ws.addEventListener('open', () => {
 ws.addEventListener('message', async (event) => {
   let evt;
   try { evt = JSON.parse(String(event.data)); } catch { return; }
+  try { console.log('[openclaw-v5] evt', evt.event, evt.action || '', evt.context || ''); } catch {}
 
   if (evt.event === 'willAppear') {
     setTitle(evt.context, defaultTitles[evt.action] || 'Ready');
