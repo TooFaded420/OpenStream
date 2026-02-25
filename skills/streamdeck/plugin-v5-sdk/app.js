@@ -1,5 +1,6 @@
-/* OpenClaw Stream Deck SDK v5 runtime */
+/* OpenClaw Stream Deck SDK v5 runtime with Dial Pack v1 */
 // Node 22+ (global fetch + WebSocket)
+// Dial Pack: 4 encoder actions - Model, TTS, Agents, Profile
 
 const args = process.argv.slice(2);
 const getArg = (name) => {
@@ -32,7 +33,23 @@ const defaultTitles = {
   'com.openclaw.v5.subagents': 'Agents',
   'com.openclaw.v5.nodes': 'Nodes',
   'com.openclaw.v5.websearch': 'Search',
-  'com.openclaw.v5.reconnect': 'Ping'
+  'com.openclaw.v5.reconnect': 'Ping',
+  'com.openclaw.v5.dial.model': 'Model',
+  'com.openclaw.v5.dial.tts': 'TTS',
+  'com.openclaw.v5.dial.agents': 'Agents',
+  'com.openclaw.v5.dial.profile': 'Profile'
+};
+
+// Dial state management
+const dialState = {
+  models: ['synthetic/hf:nvidia/Kimi-K2.5-NVFP4', 'synthetic/vertex/gemini-2.5-pro', 'anthropic/claude-3.5-sonnet', 'openai/gpt-4o'],
+  modelIndex: 0,
+  ttsVolume: 100,
+  ttsMuted: false,
+  agents: [],
+  agentIndex: 0,
+  profiles: ['default', 'coding', 'gaming', 'media'],
+  profileIndex: 0
 };
 
 function send(obj) {
@@ -145,6 +162,97 @@ async function handleKeyUp(evt) {
   return backToDefault(context, action);
 }
 
+function setFeedback(context, payload) {
+  send({ event: 'setFeedback', context, payload });
+}
+
+// Dial 1: Model cycle/apply
+async function handleModelDial(evt) {
+  const { context, payload } = evt;
+  const { ticks } = payload || {};
+  const len = dialState.models.length;
+  if (ticks) {
+    dialState.modelIndex = ((dialState.modelIndex + ticks) % len + len) % len;
+    const short = dialState.models[dialState.modelIndex].split('/').pop().slice(0, 8);
+    setFeedback(context, { title: 'Model', value: short });
+  }
+}
+
+async function handleModelDialPress(evt) {
+  const { context } = evt;
+  const model = dialState.models[dialState.modelIndex];
+  setFeedback(context, { title: '...', value: 'Apply' });
+  const res = await callGateway('/session.set', 'POST', { model });
+  const short = model.split('/').pop().slice(0, 6);
+  setFeedback(context, { title: res.ok ? 'OK' : 'ERR', value: short });
+}
+
+// Dial 2: TTS control + mute press
+async function handleTtsDial(evt) {
+  const { context, payload } = evt;
+  const { ticks } = payload || {};
+  if (ticks) {
+    dialState.ttsVolume = Math.max(0, Math.min(100, dialState.ttsVolume + ticks * 5));
+  }
+  const vol = dialState.ttsMuted ? 'MUTED' : `${dialState.ttsVolume}%`;
+  setFeedback(context, { title: 'TTS Vol', value: vol });
+}
+
+async function handleTtsDialPress(evt) {
+  const { context } = evt;
+  dialState.ttsMuted = !dialState.ttsMuted;
+  const vol = dialState.ttsMuted ? 'MUTED' : `${dialState.ttsVolume}%`;
+  setFeedback(context, { title: dialState.ttsMuted ? 'OFF' : 'ON', value: vol });
+}
+
+// Dial 3: Session/subagent navigator
+async function handleAgentsDial(evt) {
+  const { context, payload } = evt;
+  const { ticks } = payload || {};
+  const res = await callGateway('/subagents.list');
+  dialState.agents = Array.isArray(res.data?.agents) ? res.data.agents : [];
+  const len = Math.max(1, dialState.agents.length);
+  if (ticks) {
+    dialState.agentIndex = ((dialState.agentIndex + ticks) % len + len) % len;
+  }
+  const agent = dialState.agents[dialState.agentIndex];
+  const name = agent?.name?.slice(0, 8) || `(${dialState.agentIndex + 1}/${len})`;
+  setFeedback(context, { title: 'Agent', value: name });
+}
+
+async function handleAgentsDialPress(evt) {
+  const { context } = evt;
+  const agent = dialState.agents[dialState.agentIndex];
+  if (!agent?.id) {
+    setFeedback(context, { title: 'Agent', value: 'None' });
+    return;
+  }
+  setFeedback(context, { title: '...', value: 'Kill' });
+  const res = await callGateway('/subagents.kill', 'POST', { target: agent.id });
+  setFeedback(context, { title: res.ok ? 'OK' : 'ERR', value: agent.name?.slice(0, 6) || '?' });
+}
+
+// Dial 4: Gateway profile switch + ping press
+async function handleProfileDial(evt) {
+  const { context, payload } = evt;
+  const { ticks } = payload || {};
+  const len = dialState.profiles.length;
+  if (ticks) {
+    dialState.profileIndex = ((dialState.profileIndex + ticks) % len + len) % len;
+  }
+  const prof = dialState.profiles[dialState.profileIndex];
+  setFeedback(context, { title: 'Profile', value: prof });
+}
+
+async function handleProfileDialPress(evt) {
+  const { context } = evt;
+  const prof = dialState.profiles[dialState.profileIndex];
+  setFeedback(context, { title: '...', value: 'Ping' });
+  const res = await callGateway('/status');
+  const latency = res.data?.latencyMs ? `${res.data.latencyMs}ms` : (res.ok ? 'OK' : 'ERR');
+  setFeedback(context, { title: prof, value: latency });
+}
+
 ws.addEventListener('open', () => {
   send({ event: REGISTER_EVENT, uuid: PLUGIN_UUID });
   console.log('[openclaw-v5] registered');
@@ -161,6 +269,24 @@ ws.addEventListener('message', async (event) => {
 
   if (evt.event === 'keyUp') {
     await handleKeyUp(evt);
+    return;
+  }
+
+  if (evt.event === 'dialRotate') {
+    const action = evt.action;
+    if (action === 'com.openclaw.v5.dial.model') await handleModelDial(evt);
+    else if (action === 'com.openclaw.v5.dial.tts') await handleTtsDial(evt);
+    else if (action === 'com.openclaw.v5.dial.agents') await handleAgentsDial(evt);
+    else if (action === 'com.openclaw.v5.dial.profile') await handleProfileDial(evt);
+    return;
+  }
+
+  if (evt.event === 'dialUp') {
+    const action = evt.action;
+    if (action === 'com.openclaw.v5.dial.model') await handleModelDialPress(evt);
+    else if (action === 'com.openclaw.v5.dial.tts') await handleTtsDialPress(evt);
+    else if (action === 'com.openclaw.v5.dial.agents') await handleAgentsDialPress(evt);
+    else if (action === 'com.openclaw.v5.dial.profile') await handleProfileDialPress(evt);
     return;
   }
 

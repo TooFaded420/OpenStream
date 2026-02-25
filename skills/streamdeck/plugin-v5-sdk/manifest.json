@@ -55,12 +55,60 @@
       "Tooltip": "Reconnect/ping gateway",
       "Icon": "images/restart",
       "States": [{ "Image": "images/restart", "Title": "Reconnect" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.dial.model",
+      "Name": "Dial: Model",
+      "Tooltip": "Rotate: cycle models | Press: apply",
+      "Icon": "images/session",
+      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "Encoder": {
+        "layout": "$A1",
+        "Icon": "images/session",
+        "Title": "Model"
+      }
+    },
+    {
+      "UUID": "com.openclaw.v5.dial.tts",
+      "Name": "Dial: TTS",
+      "Tooltip": "Rotate: volume | Press: mute toggle",
+      "Icon": "images/tts",
+      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "Encoder": {
+        "layout": "$A1",
+        "Icon": "images/tts",
+        "Title": "TTS"
+      }
+    },
+    {
+      "UUID": "com.openclaw.v5.dial.agents",
+      "Name": "Dial: Agents",
+      "Tooltip": "Rotate: cycle agents | Press: select",
+      "Icon": "images/subagents",
+      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "Encoder": {
+        "layout": "$A1",
+        "Icon": "images/subagents",
+        "Title": "Agents"
+      }
+    },
+    {
+      "UUID": "com.openclaw.v5.dial.profile",
+      "Name": "Dial: Profile",
+      "Tooltip": "Rotate: cycle profiles | Press: ping",
+      "Icon": "images/restart",
+      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "Encoder": {
+        "layout": "$A1",
+        "Icon": "images/restart",
+        "Title": "Profile"
+      }
     }
   ],
   "SDKVersion": 2,
   "Name": "OpenClaw SDK v5",
-  "Description": "Native SDK Stream Deck plugin for OpenClaw",
-  "Version": "5.1.0",
+  "Description": "Native SDK Stream Deck plugin for OpenClaw with Dial Pack v1",
+  "Version": "5.2.0",
   "Author": "OpenClaw Community",
   "URL": "https://openclaw.ai",
   "Category": "OpenClaw",
