@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw Stream Deck Setup</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --line: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --good: #3fb950;
+      --warn: #d29922;
+      --link: #58a6ff;
+    }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Segoe UI", system-ui, sans-serif; }
+    main { max-width: 840px; margin: 28px auto; padding: 0 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+    h1, h2 { margin: 0 0 10px; }
+    h1 { font-size: 26px; }
+    h2 { font-size: 18px; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { background: #1f2937; border: 1px solid #2c3747; padding: 1px 6px; border-radius: 5px; }
+    .ok { color: var(--good); }
+    .warn { color: var(--warn); }
+    a { color: var(--link); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <h1>OpenClaw Stream Deck Setup</h1>
+      <p class="muted">This plugin is installed and the Setup key has already synced auth token to your Stream Deck gateway config.</p>
+    </div>
+
+    <div class="card">
+      <h2>Quick Verify</h2>
+      <ol>
+        <li>In Stream Deck app, switch to profile <code>OpenClaw Plus v5</code>.</li>
+        <li>Press <code>Status</code>. You should see a short success response.</li>
+        <li>Press <code>Search</code> or <code>Spawn</code>. These should trigger a gateway run.</li>
+        <li>Press <code>Nodes</code> and <code>Agents</code> for counts.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Status Codes</h2>
+      <ul>
+        <li><span class="ok">OPEN</span>: Setup page opened successfully.</li>
+        <li><span class="ok">SYNC</span>: Gateway token was re-synced from <code>~/.openclaw/openclaw.json</code>.</li>
+        <li><span class="warn">NOCFG</span>: Missing OpenClaw config file.</li>
+        <li><span class="warn">NOTOK</span>: OpenClaw config has no gateway auth token.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Manual Fallback</h2>
+      <p>From terminal:</p>
+      <p><code>cd C:\Users\jrlop\.openclaw\workspace\skills\streamdeck</code></p>
+      <p><code>powershell -ExecutionPolicy Bypass -File .\scripts\install-v5-sdk.ps1 -Force</code></p>
+      <p><code>powershell -ExecutionPolicy Bypass -File .\scripts\install-plus-starter-profile-v5.ps1 -Overwrite</code></p>
+    </div>
+  </main>
+</body>
+</html>

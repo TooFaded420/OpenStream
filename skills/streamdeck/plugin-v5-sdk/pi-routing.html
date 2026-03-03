@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw Routing Settings</title>
+  <style>
+    body{margin:0;padding:10px;font-family:Arial,sans-serif;background:#111;color:#e8e8e8}
+    .group{margin-bottom:10px;padding:10px;border:1px solid #333;border-radius:8px;background:#1a1a1a}
+    label{display:block;font-size:12px;color:#a8a8a8;margin-bottom:4px}
+    input,select{width:100%;padding:7px;border:1px solid #3b3b3b;border-radius:6px;background:#0d0d0d;color:#e8e8e8}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    button{width:100%;padding:8px;border:1px solid #2f6860;border-radius:7px;background:#133a34;color:#d8fff7;cursor:pointer}
+    .hint{font-size:11px;color:#8ea9a4;margin-top:6px}
+    .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .mini{padding:6px;font-size:12px;border-color:#444;background:#222;color:#ddd}
+    .status{font-size:11px;color:#8ea9a4;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="group">
+    <label>Route Mode</label>
+    <select id="routeMode">
+      <option value="global_active">Global Active</option>
+      <option value="fixed_gateway">Fixed Gateway</option>
+      <option value="failover_set">Failover Set</option>
+      <option value="latency_best">Latency Best</option>
+      <option value="role_based">Role Based</option>
+    </select>
+    <div class="hint">Choose how this key resolves the target gateway.</div>
+  </div>
+
+  <div class="group">
+    <label>Fixed Gateway Key</label>
+    <input id="fixedGatewayKey" placeholder="origin-main" list="gatewayKeys" />
+    <label style="margin-top:8px">Failover Gateway Keys (comma-separated)</label>
+    <input id="failoverGatewayKeys" placeholder="origin-main,zero-mac,lab-1" list="gatewayKeys" />
+    <datalist id="gatewayKeys"></datalist>
+    <div class="toolbar">
+      <button id="activeBtn" class="mini">Use Active</button>
+      <button id="allBtn" class="mini">Failover = All</button>
+    </div>
+    <div class="status" id="gwStatus">Gateway list unavailable.</div>
+  </div>
+
+  <div class="group">
+    <label>Gateway URL Override (optional)</label>
+    <input id="gatewayUrl" placeholder="http://127.0.0.1:18790" />
+    <label style="margin-top:8px">Gateway Token Override (optional)</label>
+    <input id="gatewayToken" placeholder="Bearer token" />
+  </div>
+
+  <div class="group">
+    <div class="row">
+      <div>
+        <label>Timeout (ms)</label>
+        <input id="timeoutMs" type="number" min="1000" max="30000" step="100" />
+      </div>
+      <div>
+        <label>Max Retries</label>
+        <input id="maxRetries" type="number" min="0" max="3" step="1" />
+      </div>
+    </div>
+    <label style="margin-top:8px">Retry Backoff (ms)</label>
+    <input id="retryBackoffMs" type="number" min="50" max="2000" step="50" />
+  </div>
+
+  <div class="group">
+    <label>Session Key (for Spawn/Search)</label>
+    <input id="sessionKey" placeholder="agent:main:main" />
+    <label style="margin-top:8px">Spawn Task</label>
+    <input id="spawnTask" placeholder="Quick assistance" />
+    <label style="margin-top:8px">Search Query</label>
+    <input id="searchQuery" placeholder="latest openclaw updates" />
+    <label style="margin-top:8px">Search Result Count</label>
+    <input id="searchCount" type="number" min="1" max="10" step="1" />
+  </div>
+
+  <button id="saveBtn">Save Settings</button>
+
+  <script>
+    let websocket = null;
+    let uuid = null;
+    let settings = {};
+    let gatewayKeys = [];
+    let activeGateway = '';
+    let routeModes = ['global_active', 'fixed_gateway', 'failover_set', 'latency_best', 'role_based'];
+
+    function byId(id) { return document.getElementById(id); }
+    function status(msg) { byId('gwStatus').textContent = msg; }
+
+    function updateFieldStates() {
+      const mode = byId('routeMode').value;
+      byId('fixedGatewayKey').disabled = mode !== 'fixed_gateway';
+      byId('failoverGatewayKeys').disabled = mode !== 'failover_set';
+    }
+
+    function read() {
+      return {
+        ...settings,
+        routeMode: byId('routeMode').value,
+        fixedGatewayKey: byId('fixedGatewayKey').value.trim(),
+        failoverGatewayKeys: byId('failoverGatewayKeys').value.trim(),
+        gatewayUrl: byId('gatewayUrl').value.trim(),
+        gatewayToken: byId('gatewayToken').value.trim(),
+        timeoutMs: byId('timeoutMs').value ? Number(byId('timeoutMs').value) : undefined,
+        maxRetries: byId('maxRetries').value ? Number(byId('maxRetries').value) : undefined,
+        retryBackoffMs: byId('retryBackoffMs').value ? Number(byId('retryBackoffMs').value) : undefined,
+        sessionKey: byId('sessionKey').value.trim(),
+        spawnTask: byId('spawnTask').value.trim(),
+        searchQuery: byId('searchQuery').value.trim(),
+        searchCount: byId('searchCount').value ? Number(byId('searchCount').value) : undefined
+      };
+    }
+    function write(s) {
+      settings = s || {};
+      byId('routeMode').value = settings.routeMode || 'global_active';
+      byId('fixedGatewayKey').value = settings.fixedGatewayKey || '';
+      byId('failoverGatewayKeys').value = settings.failoverGatewayKeys || '';
+      byId('gatewayUrl').value = settings.gatewayUrl || '';
+      byId('gatewayToken').value = settings.gatewayToken || '';
+      byId('timeoutMs').value = settings.timeoutMs || '';
+      byId('maxRetries').value = settings.maxRetries ?? '';
+      byId('retryBackoffMs').value = settings.retryBackoffMs ?? '';
+      byId('sessionKey').value = settings.sessionKey || '';
+      byId('spawnTask').value = settings.spawnTask || '';
+      byId('searchQuery').value = settings.searchQuery || '';
+      byId('searchCount').value = settings.searchCount ?? '';
+      updateFieldStates();
+    }
+
+    function updateDatalist() {
+      const list = byId('gatewayKeys');
+      list.innerHTML = '';
+      for (const key of gatewayKeys) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        list.appendChild(opt);
+      }
+      if (!gatewayKeys.length) {
+        status('Gateway list unavailable.');
+        return;
+      }
+      const activeText = activeGateway ? ` (active: ${activeGateway})` : '';
+      status(`Detected ${gatewayKeys.length} gateway key(s)${activeText}`);
+    }
+
+    function applyCapabilities(payload) {
+      if (!payload || payload.type !== 'routing.capabilities.v1') return;
+      gatewayKeys = Array.isArray(payload.gatewayKeys) ? payload.gatewayKeys : [];
+      activeGateway = typeof payload.activeGateway === 'string' ? payload.activeGateway : '';
+      routeModes = Array.isArray(payload.routeModes) && payload.routeModes.length ? payload.routeModes : routeModes;
+      const modeNode = byId('routeMode');
+      modeNode.innerHTML = '';
+      const labels = {
+        global_active: 'Global Active',
+        fixed_gateway: 'Fixed Gateway',
+        failover_set: 'Failover Set',
+        latency_best: 'Latency Best',
+        role_based: 'Role Based'
+      };
+      for (const mode of routeModes) {
+        const opt = document.createElement('option');
+        opt.value = mode;
+        opt.textContent = labels[mode] || mode;
+        modeNode.appendChild(opt);
+      }
+      const merged = { ...payload.settings, ...settings };
+      write(merged);
+      updateDatalist();
+    }
+
+    function save() {
+      if (!websocket || websocket.readyState !== 1 || !uuid) return;
+      const next = read();
+      websocket.send(JSON.stringify({
+        event: 'setSettings',
+        context: uuid,
+        payload: next
+      }));
+      settings = next;
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', save);
+    byId('routeMode').addEventListener('change', updateFieldStates);
+    byId('activeBtn').addEventListener('click', () => {
+      if (!activeGateway) return;
+      byId('fixedGatewayKey').value = activeGateway;
+      byId('routeMode').value = 'fixed_gateway';
+      updateFieldStates();
+    });
+    byId('allBtn').addEventListener('click', () => {
+      if (!gatewayKeys.length) return;
+      byId('failoverGatewayKeys').value = gatewayKeys.join(',');
+      byId('routeMode').value = 'failover_set';
+      updateFieldStates();
+    });
+
+    window.connectElgatoStreamDeckSocket = function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
+      uuid = inUUID;
+      const actionInfo = JSON.parse(inActionInfo);
+      write(actionInfo.payload && actionInfo.payload.settings ? actionInfo.payload.settings : {});
+      websocket = new WebSocket('ws://127.0.0.1:' + inPort);
+      websocket.onopen = function() {
+        websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inUUID }));
+        websocket.send(JSON.stringify({ event: 'getSettings', context: inUUID }));
+      };
+      websocket.onmessage = function(evt) {
+        let msg = null;
+        try { msg = JSON.parse(evt.data); } catch { return; }
+        if (msg.event === 'didReceiveSettings' && msg.context === uuid) {
+          write(msg.payload && msg.payload.settings ? msg.payload.settings : {});
+        }
+        if (msg.event === 'sendToPropertyInspector' && msg.context === uuid) {
+          applyCapabilities(msg.payload || {});
+        }
+      };
+    };
+  </script>
+</body>
+</html>

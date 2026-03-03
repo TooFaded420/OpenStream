@@ -1,0 +1,65 @@
+{
+  "version": "3.0.0",
+  "user": "Hector",
+  "devices": [
+    {
+      "name": "MK.2",
+      "model": "20GAI9901",
+      "keys": 15,
+      "profile": "OpenClaw-Control-MK2",
+      "layout": [
+        { "key": 0, "action": "gateway-switch", "title": "Switch GW", "icon": "switch.png" },
+        { "key": 1, "action": "tts", "title": "TTS Toggle", "icon": "tts.png" },
+        { "key": 2, "action": "spawn", "title": "Spawn Agent", "icon": "spawn.png" },
+        { "key": 3, "action": "status", "title": "Status", "icon": "status.png" },
+        { "key": 4, "action": "models", "title": "Models", "icon": "models.png" },
+        { "key": 5, "action": "nodes", "title": "Nodes", "icon": "nodes.png" },
+        { "key": 6, "action": "restart", "title": "Restart", "icon": "restart.png" },
+        { "key": 7, "action": "config", "title": "Config", "icon": "config.png" },
+        { "key": 8, "action": "session", "title": "Session", "icon": "session.png" },
+        { "key": 9, "action": "memory", "title": "Memory", "icon": "memory.png" },
+        { "key": 10, "action": "websearch", "title": "Search", "icon": "websearch.png" },
+        { "key": 11, "action": "coding-spawn", "title": "Code", "icon": "coding.png" },
+        { "key": 12, "action": "coding-debug", "title": "Debug", "icon": "debug.png" },
+        { "key": 13, "action": "message-send", "title": "Message", "icon": "message.png" },
+        { "key": 14, "action": "browser", "title": "Browser", "icon": "browser.png" }
+      ]
+    },
+    {
+      "name": "Plus",
+      "model": "20GBA9901", 
+      "keys": 15,
+      "dials": 4,
+      "profile": "OpenClaw-Studio-Plus",
+      "layout": {
+        "keys": [
+          { "key": 0, "action": "gateway-switch", "title": "Switch GW", "icon": "switch.png" },
+          { "key": 1, "action": "spawn", "title": "Spawn", "icon": "spawn.png" },
+          { "key": 2, "action": "status", "title": "Status", "icon": "status.png" },
+          { "key": 3, "action": "models", "title": "Models", "icon": "models.png" },
+          { "key": 4, "action": "session", "title": "Session", "icon": "session.png" },
+          { "key": 5, "action": "tts", "title": "TTS", "icon": "tts.png" },
+          { "key": 6, "action": "restart", "title": "Restart", "icon": "restart.png" },
+          { "key": 7, "action": "config", "title": "Config", "icon": "config.png" },
+          { "key": 8, "action": "memory", "title": "Memory", "icon": "memory.png" },
+          { "key": 9, "action": "websearch", "title": "Search", "icon": "websearch.png" },
+          { "key": 10, "action": "nodes", "title": "Nodes", "icon": "nodes.png" },
+          { "key": 11, "action": "coding-spawn", "title": "Code", "icon": "coding.png" },
+          { "key": 12, "action": "coding-debug", "title": "Debug", "icon": "debug.png" },
+          { "key": 13, "action": "message-send", "title": "Message", "icon": "message.png" },
+          { "key": 14, "action": "browser", "title": "Browser", "icon": "browser.png" }
+        ],
+        "dials": [
+          { "dial": 0, "turn": "volume-system", "press": "mute-toggle", "title": "Vol" },
+          { "dial": 1, "turn": "volume-mic", "press": "push-to-talk", "title": "Mic" },
+          { "dial": 2, "turn": "brightness", "press": "reset-default", "title": "Bright" },
+          { "dial": 3, "turn": "scroll", "press": "jump-top", "title": "Scroll" }
+        ]
+      }
+    }
+  ],
+  "multiGateway": {
+    "primary": "http://127.0.0.1:18790",
+    "secondary": "http://100.92.222.41:18789"
+  }
+}

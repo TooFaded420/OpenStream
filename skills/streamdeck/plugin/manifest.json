@@ -1,0 +1,143 @@
+{
+  "Actions": [
+    {
+      "Icon": "images/tts",
+      "Name": "OpenClaw TTS",
+      "States": [
+        {
+          "Image": "images/tts",
+          "Title": "TTS"
+        }
+      ],
+      "Tooltip": "Toggle text-to-speech",
+      "UUID": "com.openclaw.tts"
+    },
+    {
+      "Icon": "images/spawn",
+      "Name": "OpenClaw Spawn",
+      "States": [
+        {
+          "Image": "images/spawn",
+          "Title": "Spawn"
+        }
+      ],
+      "Tooltip": "Spawn a sub-agent",
+      "UUID": "com.openclaw.spawn"
+    },
+    {
+      "Icon": "images/status",
+      "Name": "OpenClaw Status",
+      "States": [
+        {
+          "Image": "images/status",
+          "Title": "Status"
+        }
+      ],
+      "Tooltip": "Check OpenClaw status",
+      "UUID": "com.openclaw.status"
+    },
+    {
+      "Icon": "images/models",
+      "Name": "OpenClaw Models",
+      "States": [
+        {
+          "Image": "images/models",
+          "Title": "Models"
+        }
+      ],
+      "Tooltip": "List AI models",
+      "UUID": "com.openclaw.models"
+    },
+    {
+      "Icon": "images/subagents",
+      "Name": "OpenClaw Subagents",
+      "States": [
+        {
+          "Image": "images/subagents",
+          "Title": "Agents"
+        }
+      ],
+      "Tooltip": "View active sub-agents",
+      "UUID": "com.openclaw.subagents"
+    },
+    {
+      "Icon": "images/nodes",
+      "Name": "OpenClaw Nodes",
+      "States": [
+        {
+          "Image": "images/nodes",
+          "Title": "Nodes"
+        }
+      ],
+      "Tooltip": "Check paired nodes",
+      "UUID": "com.openclaw.nodes"
+    },
+    {
+      "Icon": "images/restart",
+      "Name": "OpenClaw Restart",
+      "States": [
+        {
+          "Image": "images/restart",
+          "Title": "Restart"
+        }
+      ],
+      "Tooltip": "Restart OpenClaw gateway",
+      "UUID": "com.openclaw.restart"
+    },
+    {
+      "Icon": "images/config",
+      "Name": "OpenClaw Config",
+      "States": [
+        {
+          "Image": "images/config",
+          "Title": "Config"
+        }
+      ],
+      "Tooltip": "View configuration",
+      "UUID": "com.openclaw.config"
+    },
+    {
+      "Icon": "images/session",
+      "Name": "OpenClaw Session",
+      "States": [
+        {
+          "Image": "images/session",
+          "Title": "Session"
+        }
+      ],
+      "Tooltip": "Session info",
+      "UUID": "com.openclaw.session"
+    },
+    {
+      "Icon": "images/websearch",
+      "Name": "OpenClaw Search",
+      "States": [
+        {
+          "Image": "images/websearch",
+          "Title": "Search"
+        }
+      ],
+      "Tooltip": "Web search",
+      "UUID": "com.openclaw.websearch"
+    }
+  ],
+  "Category": "OpenClaw",
+  "CategoryIcon": "images/openclaw",
+  "CodePathWin": "openclaw-plugin.exe",
+  "Description": "Control OpenClaw AI assistant from your Stream Deck",
+  "Name": "OpenClaw",
+  "Icon": "images/openclaw",
+  "UUID": "com.openclaw.streamdeck",
+  "Version": "1.0.0",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "6.0"
+  },
+  "Author": "OpenClaw Community",
+  "URL": "https://openclaw.ai"
+}

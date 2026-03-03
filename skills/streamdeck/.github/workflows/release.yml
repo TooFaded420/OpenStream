@@ -1,0 +1,78 @@
+name: Release Stream Deck Skill
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      shell: pwsh
+      run: |
+        $PSVersionTable
+        
+    - name: Verify icon files exist
+      shell: pwsh
+      run: |
+        $icons = Get-ChildItem "assets/icons/*.png" -ErrorAction SilentlyContinue
+        if ($icons.Count -eq 0) {
+          Write-Error "No PNG icons found in assets/icons/"
+          exit 1
+        }
+        Write-Host "Found $($icons.Count) icon files"
+        
+    - name: Create Release Package
+      shell: pwsh
+      run: |
+        # Create release directory
+        New-Item -ItemType Directory -Path "release" -Force
+        
+        # Copy all files except git and development files
+        $exclude = @('.git', '.github', 'release', '*.md', 'LICENSE')
+        Get-ChildItem -Exclude $exclude | ForEach-Object {
+          Copy-Item $_.FullName "release/" -Recurse -Force
+        }
+        
+        # Create zip
+        Compress-Archive -Path "release/*" -DestinationPath "openclaw-streamdeck.zip" -Force
+        
+        Write-Host "Release package created: openclaw-streamdeck.zip"
+        
+    - name: Upload Release Asset
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: openclaw-streamdeck.zip
+        body: |
+          ## OpenClaw Stream Deck Integration
+          
+          ### What's Included
+          - Auto-setup script for one-click installation
+          - Hardware detection for all Stream Deck models
+          - 10 custom icons in OpenClaw coral red
+          - Profile generators for MK.2, XL, and Plus
+          - Complete documentation
+          
+          ### Installation
+          1. Download `openclaw-streamdeck.zip`
+          2. Extract to your desired location
+          3. Run `scripts/auto-setup-v3.ps1` as Administrator
+          4. Import generated profiles into Stream Deck software
+          
+          ### Requirements
+          - Windows 10/11
+          - Stream Deck hardware & software
+          - OpenClaw installed and running
+          - PowerShell 5.1+
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

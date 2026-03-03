@@ -5,6 +5,7 @@
       "Name": "OpenClaw Status",
       "Tooltip": "Check gateway status",
       "Icon": "images/status",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/status", "Title": "Status" }]
     },
     {
@@ -12,6 +13,7 @@
       "Name": "OpenClaw TTS",
       "Tooltip": "Toggle TTS",
       "Icon": "images/tts",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/tts", "Title": "TTS" }]
     },
     {
@@ -19,6 +21,7 @@
       "Name": "OpenClaw Spawn",
       "Tooltip": "Spawn helper agent",
       "Icon": "images/spawn",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/spawn", "Title": "Spawn" }]
     },
     {
@@ -26,6 +29,7 @@
       "Name": "OpenClaw Session",
       "Tooltip": "Session status",
       "Icon": "images/session",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/session", "Title": "Session" }]
     },
     {
@@ -33,6 +37,7 @@
       "Name": "OpenClaw Subagents",
       "Tooltip": "List active subagents",
       "Icon": "images/subagents",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/subagents", "Title": "Agents" }]
     },
     {
@@ -40,6 +45,7 @@
       "Name": "OpenClaw Nodes",
       "Tooltip": "Check paired nodes",
       "Icon": "images/nodes",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/nodes", "Title": "Nodes" }]
     },
     {
@@ -47,6 +53,7 @@
       "Name": "OpenClaw Search",
       "Tooltip": "Quick web search",
       "Icon": "images/websearch",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/websearch", "Title": "Search" }]
     },
     {
@@ -54,6 +61,7 @@
       "Name": "OpenClaw Reconnect",
       "Tooltip": "Reconnect/ping gateway",
       "Icon": "images/restart",
+      "PropertyInspectorPath": "pi-routing.html",
       "States": [{ "Image": "images/restart", "Title": "Reconnect" }]
     },
     {
@@ -71,12 +79,37 @@
       "States": [{ "Image": "images/restart", "Title": "Gateway" }]
     },
     {
-      "UUID": "com.openclaw.v5.dial.model",
+      "UUID": "com.openclaw.v5.route.mode",
+      "Name": "Route Mode",
+      "Tooltip": "Cycle routing policy for this key",
+      "Icon": "images/config",
+      "PropertyInspectorPath": "pi-routing.html",
+      "States": [{ "Image": "images/config", "Title": "Route" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.route.gateway",
+      "Name": "Route Gateway",
+      "Tooltip": "Cycle fixed gateway target for this key",
+      "Icon": "images/restart",
+      "PropertyInspectorPath": "pi-routing.html",
+      "States": [{ "Image": "images/restart", "Title": "Target" }]
+    },
+    {
+      "UUID": "com.openclaw.v5.route.health",
+      "Name": "Route Best",
+      "Tooltip": "Pick best healthy gateway now",
+      "Icon": "images/status",
+      "PropertyInspectorPath": "pi-routing.html",
+      "States": [{ "Image": "images/status", "Title": "Best" }]
+    },
+    {
+      "UUID": "com.openclaw.streamdeck.v5.dial.model",
       "Name": "Dial: Model",
       "Tooltip": "Rotate: cycle models | Press: apply",
       "Icon": "images/session",
+      "PropertyInspectorPath": "pi-routing.html",
       "Controllers": ["Encoder"],
-      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "States": [{ "Image": "images/session", "Title": "Model" }],
       "Encoder": {
         "layout": "$A1",
         "Icon": "images/session",
@@ -84,12 +117,13 @@
       }
     },
     {
-      "UUID": "com.openclaw.v5.dial.tts",
+      "UUID": "com.openclaw.streamdeck.v5.dial.tts",
       "Name": "Dial: TTS",
       "Tooltip": "Rotate: volume | Press: mute toggle",
       "Icon": "images/tts",
+      "PropertyInspectorPath": "pi-routing.html",
       "Controllers": ["Encoder"],
-      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "States": [{ "Image": "images/tts", "Title": "TTS" }],
       "Encoder": {
         "layout": "$A1",
         "Icon": "images/tts",
@@ -97,12 +131,13 @@
       }
     },
     {
-      "UUID": "com.openclaw.v5.dial.agents",
+      "UUID": "com.openclaw.streamdeck.v5.dial.agents",
       "Name": "Dial: Agents",
       "Tooltip": "Rotate: cycle agents | Press: select",
       "Icon": "images/subagents",
+      "PropertyInspectorPath": "pi-routing.html",
       "Controllers": ["Encoder"],
-      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "States": [{ "Image": "images/subagents", "Title": "Agents" }],
       "Encoder": {
         "layout": "$A1",
         "Icon": "images/subagents",
@@ -110,12 +145,13 @@
       }
     },
     {
-      "UUID": "com.openclaw.v5.dial.profile",
+      "UUID": "com.openclaw.streamdeck.v5.dial.profile",
       "Name": "Dial: Gateway",
       "Tooltip": "Rotate: preview gateways | Press: apply + ping",
       "Icon": "images/restart",
+      "PropertyInspectorPath": "pi-routing.html",
       "Controllers": ["Encoder"],
-      "SupportedDevices": ["Stream Deck +", "Stream Deck Neo"],
+      "States": [{ "Image": "images/restart", "Title": "Gateway" }],
       "Encoder": {
         "layout": "$A1",
         "Icon": "images/restart",
@@ -124,9 +160,9 @@
     }
   ],
   "SDKVersion": 2,
-  "Name": "OpenClaw SDK v5",
-  "Description": "Native SDK Stream Deck plugin for OpenClaw with Dial Pack v1 + Gateway Switcher v1",
-  "Version": "5.3.0",
+  "Name": "OpenClaw SDK v5 (Early 1.0)",
+  "Description": "Native SDK Stream Deck plugin for OpenClaw (v5 line) - Early 1.0 with Dial Pack v1 + Gateway Switcher v1",
+  "Version": "5.4.0",
   "Author": "OpenClaw Community",
   "URL": "https://openclaw.ai",
   "Category": "OpenClaw",
