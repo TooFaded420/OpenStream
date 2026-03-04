@@ -1,12 +1,11 @@
 {
-  "name": "openclaw-streamdeck-skill",
+  "name": "openstream-streamdeck-v5-plugin",
   "version": "1.0.0",
   "private": true,
-  "description": "OpenClaw Stream Deck skill quality gates",
+  "description": "OpenStream Stream Deck v5 plugin quality gates",
   "scripts": {
-    "test:web-dashboard": "node --test web-dashboard/tests/server.contract.test.js",
     "test:plugin": "node --test plugin-v5-sdk/tests/retry.logic.test.js plugin-v5-sdk/tests/gateway-call.integration.test.js plugin-v5-sdk/tests/routing.policy.test.js plugin-v5-sdk/tests/routing.virtual.integration.test.js",
-    "test:ci": "npm run test:web-dashboard && npm run test:plugin",
+    "test:ci": "npm run test:plugin",
     "build": "npm run test:ci"
   }
 }
